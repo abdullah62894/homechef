@@ -167,6 +167,88 @@ Errors: `401` (missing or invalid credentials), `404 USER_NOT_FOUND`.
 | `NOT_FOUND` | Route/resource not found |
 | `INTERNAL_ERROR` | Unhandled server error |
 
+### Chef profiles (Stage 2)
+
+| Method | Path | Description |
+| ------ | ---- | ----------- |
+| GET | `/api/chefs` | List public chef profiles (paginated, anonymous) |
+| GET | `/api/chefs/{id}` | Public chef profile (anonymous) |
+| GET | `/api/chefs/me` | Calling chef's own profile (Chef role) |
+| POST | `/api/chefs/me` | Create calling chef's profile (Chef role) |
+| PUT | `/api/chefs/me` | Update calling chef's profile (Chef role) |
+
+#### GET `/api/chefs`
+
+Public, paginated list ordered by display name.
+
+```text
+?page=1&pageSize=20
+```
+
+`page` defaults to 1; `pageSize` is clamped to 1–50 (default 20).
+
+```json
+// 200 response
+{
+  "data": [
+    {
+      "id": "17994471-e812-4da7-ae46-441555e5f09a",
+      "displayName": "Amna's Kitchen",
+      "bio": "Home-cooked Pakistani and continental dishes prepared fresh to order.",
+      "city": "Karachi",
+      "area": "Clifton",
+      "cuisines": ["Bakery", "Pakistani"],
+      "photoUrl": null
+    }
+  ],
+  "meta": { "page": 1, "pageSize": 20, "total": 1, "hasMore": false }
+}
+```
+
+#### GET `/api/chefs/{id}`
+
+Returns one public profile; `404 CHEF_PROFILE_NOT_FOUND` if it does not exist.
+
+#### GET `/api/chefs/me`
+
+Returns the calling chef's profile; `404 CHEF_PROFILE_NOT_FOUND` when the chef
+has not created one yet.
+
+#### POST `/api/chefs/me`
+
+Creates the calling chef's profile (first time). Returns `201` with the full
+profile and sets no cookie. `409 CHEF_PROFILE_EXISTS` if a profile already
+exists (use PUT to update).
+
+```json
+// request
+{
+  "displayName": "Amna's Kitchen",
+  "bio": "Home-cooked Pakistani and continental dishes prepared fresh to order.",
+  "city": "Karachi",
+  "area": "Clifton",
+  "cuisines": ["Pakistani", "Bakery"]
+}
+```
+
+`cuisines` is optional; values are trimmed, de-duplicated case-insensitively,
+and capped at 10 tags of 50 characters each.
+
+#### PUT `/api/chefs/me`
+
+Replaces the calling chef's profile. `404 CHEF_PROFILE_NOT_FOUND` when no
+profile exists yet.
+
+Errors: `401` (not signed in), `403` (not a Chef), `400 VALIDATION_ERROR`,
+`404 CHEF_PROFILE_NOT_FOUND`, `409 CHEF_PROFILE_EXISTS`.
+
+#### Error codes (chefs)
+
+| Code | Meaning |
+| ---- | ------- |
+| `CHEF_PROFILE_NOT_FOUND` | No profile matches the id / user |
+| `CHEF_PROFILE_EXISTS` | A profile already exists for this account |
+
 ## Pagination
 
 List endpoints (added from Stage 2 onward) use `page` / `pageSize` query

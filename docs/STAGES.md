@@ -8,7 +8,7 @@ ahead of their stage unless required as architectural foundations.
 | ----- | ----- | ------ |
 | 0 | Architecture & repository setup — scaffold, DB wiring, health endpoint | Done |
 | 1 | Users and authentication — Identity, roles, JWT cookie auth | Done |
-| 2 | Chef profiles | Planned |
+| 2 | Chef profiles | Done |
 | 3 | Food / menu system | Planned |
 | 4 | Search and locations (PostGIS) | Planned |
 | 5 | Reviews and ratings | Planned |

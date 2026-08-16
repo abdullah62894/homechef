@@ -1,5 +1,7 @@
+using HomeChef.Application.Features.Chefs;
 using HomeChef.Domain.Identity;
 using HomeChef.Infrastructure.Data;
+using HomeChef.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -40,6 +42,8 @@ public static class DependencyInjection
             })
             .AddRoles<ApplicationRole>()
             .AddEntityFrameworkStores<HomeChefDbContext>();
+
+        services.AddScoped<IChefProfileRepository, ChefProfileRepository>();
 
         return services;
     }

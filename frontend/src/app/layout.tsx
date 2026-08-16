@@ -58,6 +58,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <div className="mx-auto flex h-14 max-w-5xl items-center gap-6 px-4">
             <span className="text-lg font-semibold">HomeChef</span>
             <nav className="ml-auto flex items-center gap-4 text-sm">
+              <Link href="/chefs" className="text-gray-600 hover:text-gray-900">
+                Chefs
+              </Link>
               <Link href="/login" className="text-gray-600 hover:text-gray-900">
                 Sign in
               </Link>

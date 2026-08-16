@@ -1,4 +1,5 @@
 using HomeChef.Application.Features.Auth;
+using HomeChef.Application.Features.Chefs;
 using HomeChef.Application.Security;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -13,6 +14,7 @@ public static class DependencyInjection
 
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<ITokenService, JwtTokenService>();
+        services.AddScoped<IChefService, ChefService>();
 
         return services;
     }

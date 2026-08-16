@@ -51,8 +51,8 @@ public class ExceptionHandlingMiddleware
     private static int MapStatusCode(string code) => code switch
     {
         ErrorCodes.InvalidCredentials or ErrorCodes.LockedOut => StatusCodes.Status401Unauthorized,
-        ErrorCodes.EmailTaken => StatusCodes.Status409Conflict,
-        ErrorCodes.UserNotFound => StatusCodes.Status404NotFound,
+        ErrorCodes.EmailTaken or ErrorCodes.ChefProfileExists => StatusCodes.Status409Conflict,
+        ErrorCodes.UserNotFound or ErrorCodes.ChefProfileNotFound => StatusCodes.Status404NotFound,
         _ => StatusCodes.Status400BadRequest,
     };
 

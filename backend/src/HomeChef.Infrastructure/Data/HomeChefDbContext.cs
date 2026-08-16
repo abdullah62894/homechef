@@ -1,3 +1,4 @@
+using HomeChef.Domain.Chefs;
 using HomeChef.Domain.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -10,6 +11,8 @@ public class HomeChefDbContext : IdentityDbContext<ApplicationUser, ApplicationR
         : base(options)
     {
     }
+
+    public DbSet<ChefProfile> ChefProfiles => Set<ChefProfile>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

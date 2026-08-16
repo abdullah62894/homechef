@@ -42,7 +42,10 @@ Stage 0: only the `__EFMigrationsHistory` table exists in the `homechef` schema.
 Stage 1: ASP.NET Core Identity tables (`AspNetUsers`, `AspNetRoles`, ...) with
 `Guid` keys, plus `FirstName`/`LastName` on users.
 
-Later stages add chefs, food items, categories, locations, reviews, favorites,
+Stage 2: `ChefProfiles` (one-to-one with `AspNetUsers`, unique `UserId` FK,
+`text[]` cuisines). Public discovery lists/detail are read from this table.
+
+Later stages add food items, categories, locations, reviews, favorites,
 contact requests, photos, verification, and moderation tables.
 
 ## Geographic data
