@@ -17,5 +17,8 @@ RUN dotnet publish backend/src/HomeChef.Api/HomeChef.Api.csproj -c Release -o /a
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
 COPY --from=build /app/publish .
+ENV ASPNETCORE_URLS=http://+:8080
+ENV ASPNETCORE_ENVIRONMENT=Production
 EXPOSE 8080
-ENTRYPOINT ["dotnet", "HomeChef.Api.dll"]
+# Render injects PORT at runtime; bind to it when set, else fall back to 8080.
+ENTRYPOINT ["sh", "-c", "ASPNETCORE_URLS=http://+:${PORT:-8080} dotnet HomeChef.Api.dll"]

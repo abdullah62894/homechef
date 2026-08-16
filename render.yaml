@@ -1,0 +1,36 @@
+# Render Blueprint for HomeChef (backend API + managed Postgres).
+# Applied from the Render dashboard (New + > Blueprint) or via the Render API.
+# The frontend (Next.js) deploys on Vercel, not here.
+
+services:
+  - type: web
+    name: homechef-api
+    runtime: docker
+    repo: https://github.com/abdullah62894/homechef
+    branch: master
+    dockerfilePath: ./infrastructure/docker/Dockerfile.api
+    healthCheckPath: /health
+    plan: free
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: Database__AutoMigrate
+        value: "true"
+      - key: ConnectionStrings__Default
+        fromDatabase:
+          name: homechef-db
+          property: connectionString
+      - key: Jwt__Issuer
+        value: HomeChef
+      - key: Jwt__Audience
+        value: HomeChefWeb
+      - key: Jwt__SigningKey
+        sync: false
+      - key: Cors__AllowedOrigins__0
+        sync: false
+
+databases:
+  - name: homechef-db
+    plan: free
+    databaseName: homechef
+    user: homechef

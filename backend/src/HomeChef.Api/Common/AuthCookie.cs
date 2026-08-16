@@ -14,7 +14,10 @@ public static class AuthCookie
             {
                 HttpOnly = true,
                 Secure = options.RequireSecureCookie,
-                SameSite = SameSiteMode.Lax,
+                // Cross-origin (e.g. Vercel frontend + hosted API) requires
+                // SameSite=None over HTTPS. Over plain HTTP (development)
+                // browsers reject None, so fall back to Lax.
+                SameSite = options.RequireSecureCookie ? SameSiteMode.None : SameSiteMode.Lax,
                 Path = "/",
                 Expires = DateTimeOffset.UtcNow.AddMinutes(options.ExpiresInMinutes),
             });
@@ -28,7 +31,7 @@ public static class AuthCookie
             {
                 HttpOnly = true,
                 Secure = options.RequireSecureCookie,
-                SameSite = SameSiteMode.Lax,
+                SameSite = options.RequireSecureCookie ? SameSiteMode.None : SameSiteMode.Lax,
                 Path = "/",
             });
     }
