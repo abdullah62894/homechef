@@ -1,0 +1,39 @@
+# ===== .NET / backend =====
+[Bb]in/
+[Oo]bj/
+*.user
+*.suo
+*.userprefs
+.vs/
+*.nupkg
+*.snupkg
+project.lock.json
+artifacts/
+TestResults/
+*.log
+
+# EF Core
+*.jfm
+
+# ===== Node / frontend =====
+node_modules/
+.next/
+out/
+build/
+*.tsbuildinfo
+next-env.d.ts
+.vercel/
+
+# ===== Environment & secrets =====
+.env
+.env.*
+!.env.example
+appsettings.Production.json
+*.pem
+*.key
+
+# ===== OS / editor =====
+.DS_Store
+Thumbs.db
+.idea/
+*.swp
