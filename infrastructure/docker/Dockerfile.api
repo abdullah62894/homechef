@@ -4,14 +4,15 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
-COPY backend/HomeChef.slnx ./
+COPY backend/HomeChef.slnx backend/
 COPY backend/src/HomeChef.Domain/HomeChef.Domain.csproj backend/src/HomeChef.Domain/
 COPY backend/src/HomeChef.Application/HomeChef.Application.csproj backend/src/HomeChef.Application/
 COPY backend/src/HomeChef.Infrastructure/HomeChef.Infrastructure.csproj backend/src/HomeChef.Infrastructure/
 COPY backend/src/HomeChef.Api/HomeChef.Api.csproj backend/src/HomeChef.Api/
-RUN dotnet restore HomeChef.slnx
+RUN dotnet restore backend/HomeChef.slnx
 
 COPY backend/src backend/src
+COPY backend/tests backend/tests
 RUN dotnet publish backend/src/HomeChef.Api/HomeChef.Api.csproj -c Release -o /app/publish --no-restore
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
