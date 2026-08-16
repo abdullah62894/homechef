@@ -1,6 +1,8 @@
 using System.Net;
 using System.Text.Json;
 using HomeChef.Api.Common;
+using HomeChef.Application.Common.Errors;
+using HomeChef.Application.Common.Exceptions;
 
 namespace HomeChef.Api.Middleware;
 
@@ -13,6 +15,7 @@ public class ExceptionHandlingMiddleware
 {
     private readonly RequestDelegate _next;
     private readonly ILogger<ExceptionHandlingMiddleware> _logger;
+    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
     public ExceptionHandlingMiddleware(RequestDelegate next, ILogger<ExceptionHandlingMiddleware> logger)
     {
@@ -25,6 +28,11 @@ public class ExceptionHandlingMiddleware
         try
         {
             await _next(context);
+        }
+        catch (BusinessException ex)
+        {
+            var statusCode = MapStatusCode(ex.Code);
+            await WriteErrorAsync(context, statusCode, ex.Code, ex.Message);
         }
         catch (ApiException ex)
         {
@@ -40,6 +48,14 @@ public class ExceptionHandlingMiddleware
         }
     }
 
+    private static int MapStatusCode(string code) => code switch
+    {
+        ErrorCodes.InvalidCredentials or ErrorCodes.LockedOut => StatusCodes.Status401Unauthorized,
+        ErrorCodes.EmailTaken => StatusCodes.Status409Conflict,
+        ErrorCodes.UserNotFound => StatusCodes.Status404NotFound,
+        _ => StatusCodes.Status400BadRequest,
+    };
+
     private static async Task WriteErrorAsync(HttpContext context, int statusCode, string code, string message)
     {
         if (context.Response.HasStarted)
@@ -52,6 +68,6 @@ public class ExceptionHandlingMiddleware
 
         var response = new ApiErrorResponse(new ApiError(code, message));
 
-        await context.Response.WriteAsync(JsonSerializer.Serialize(response));
+        await context.Response.WriteAsync(JsonSerializer.Serialize(response, JsonOptions));
     }
 }

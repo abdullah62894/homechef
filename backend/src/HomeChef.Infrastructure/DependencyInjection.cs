@@ -1,4 +1,6 @@
+using HomeChef.Domain.Identity;
 using HomeChef.Infrastructure.Data;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,6 +22,24 @@ public static class DependencyInjection
         services.AddDbContext<HomeChefDbContext>(options =>
             options.UseNpgsql(connectionString, npgsql =>
                 npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "homechef")));
+
+        services
+            .AddIdentityCore<ApplicationUser>(options =>
+            {
+                options.Password.RequiredLength = 8;
+                options.Password.RequireNonAlphanumeric = false;
+                options.Password.RequireUppercase = true;
+                options.Password.RequireLowercase = true;
+                options.Password.RequireDigit = true;
+
+                options.Lockout.AllowedForNewUsers = true;
+                options.Lockout.MaxFailedAccessAttempts = 5;
+                options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
+
+                options.User.RequireUniqueEmail = true;
+            })
+            .AddRoles<ApplicationRole>()
+            .AddEntityFrameworkStores<HomeChefDbContext>();
 
         return services;
     }

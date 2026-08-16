@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -54,8 +55,19 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full flex flex-col">
         <header className="border-b">
-          <div className="mx-auto flex h-14 max-w-5xl items-center px-4">
+          <div className="mx-auto flex h-14 max-w-5xl items-center gap-6 px-4">
             <span className="text-lg font-semibold">HomeChef</span>
+            <nav className="ml-auto flex items-center gap-4 text-sm">
+              <Link href="/login" className="text-gray-600 hover:text-gray-900">
+                Sign in
+              </Link>
+              <Link href="/register" className="text-gray-600 hover:text-gray-900">
+                Create account
+              </Link>
+              <Link href="/me" className="text-gray-600 hover:text-gray-900">
+                My account
+              </Link>
+            </nav>
           </div>
         </header>
         <main className="flex-1">{children}</main>

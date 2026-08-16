@@ -1,15 +1,22 @@
+using System.Security.Claims;
+using System.Text;
 using System.Text.Json.Serialization;
 using HomeChef.Api.Common;
 using HomeChef.Api.Middleware;
 using HomeChef.Application;
+using HomeChef.Application.Security;
+using HomeChef.Domain.Constants;
 using HomeChef.Infrastructure;
 using HomeChef.Infrastructure.Data;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddApplication();
+builder.Services.AddApplication(builder.Configuration);
 builder.Services.AddInfrastructure(builder.Configuration);
 
 builder.Services.AddControllers()
@@ -42,6 +49,63 @@ builder.Services.Configure<ApiBehaviorOptions>(options =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddOpenApi();
 
+var jwtOptions = builder.Configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>()
+                 ?? throw new InvalidOperationException("JWT configuration is missing.");
+
+if (string.IsNullOrWhiteSpace(jwtOptions.SigningKey) || jwtOptions.SigningKey.Length < 32)
+{
+    throw new InvalidOperationException(
+        "JWT signing key must be configured and at least 32 characters long (see 'Jwt:SigningKey').");
+}
+
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = jwtOptions.Issuer,
+            ValidateAudience = true,
+            ValidAudience = jwtOptions.Audience,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.SigningKey)),
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.FromMinutes(1),
+            NameClaimType = ClaimTypes.NameIdentifier,
+            RoleClaimType = ClaimTypes.Role,
+        };
+
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                // Accept the token from the auth cookie (browser) or the
+                // Authorization header (API clients).
+                var token = context.Request.Cookies[jwtOptions.CookieName];
+                if (string.IsNullOrEmpty(token))
+                {
+                    token = context.Request.Headers.Authorization.ToString()
+                        .Replace("Bearer ", string.Empty, StringComparison.OrdinalIgnoreCase);
+                }
+
+                if (!string.IsNullOrEmpty(token))
+                {
+                    context.Token = token;
+                }
+
+                return Task.CompletedTask;
+            },
+        };
+    });
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy(Policies.RequireCustomer, policy => policy.RequireRole(Roles.Customer));
+    options.AddPolicy(Policies.RequireChef, policy => policy.RequireRole(Roles.Chef));
+    options.AddPolicy(Policies.RequireAdmin, policy => policy.RequireRole(Roles.Admin));
+});
+
 var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
 builder.Services.AddCors(options =>
 {
@@ -68,6 +132,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors("Frontend");
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapControllers();
 
@@ -96,6 +163,8 @@ app.MapHealthChecks("/health", new HealthCheckOptions
         await context.Response.WriteAsJsonAsync(response);
     },
 });
+
+await DatabaseInitializer.InitializeAsync(app.Services);
 
 app.Run();
 

@@ -1,8 +1,10 @@
+using HomeChef.Domain.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace HomeChef.Infrastructure.Data;
 
-public class HomeChefDbContext : DbContext
+public class HomeChefDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, Guid>
 {
     public HomeChefDbContext(DbContextOptions<HomeChefDbContext> options)
         : base(options)
