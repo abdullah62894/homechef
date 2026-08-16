@@ -16,6 +16,16 @@ using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Containers have strict inotify limits (e.g. Render free tier); disable
+// config-file reload watchers so startup doesn't throw IOException.
+foreach (var source in builder.Configuration.Sources)
+{
+    if (source is Microsoft.Extensions.Configuration.FileConfigurationSource fileSource)
+    {
+        fileSource.ReloadOnChange = false;
+    }
+}
+
 builder.Services.AddApplication(builder.Configuration);
 builder.Services.AddInfrastructure(builder.Configuration);
 
