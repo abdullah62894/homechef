@@ -9,6 +9,7 @@ COPY backend/src/HomeChef.Domain/HomeChef.Domain.csproj backend/src/HomeChef.Dom
 COPY backend/src/HomeChef.Application/HomeChef.Application.csproj backend/src/HomeChef.Application/
 COPY backend/src/HomeChef.Infrastructure/HomeChef.Infrastructure.csproj backend/src/HomeChef.Infrastructure/
 COPY backend/src/HomeChef.Api/HomeChef.Api.csproj backend/src/HomeChef.Api/
+COPY backend/tests/HomeChef.Api.Tests/HomeChef.Api.Tests.csproj backend/tests/HomeChef.Api.Tests/
 RUN dotnet restore backend/HomeChef.slnx
 
 COPY backend/src backend/src
