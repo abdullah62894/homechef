@@ -5,8 +5,9 @@ namespace HomeChef.Application.Features.Chefs;
 
 public interface IChefService
 {
-    /// <summary>Lists public chef profiles, ordered by display name.</summary>
+    /// <summary>Lists public chef profiles with optional filtering and proximity search.</summary>
     Task<PagedResult<ChefListItemDto>> ListAsync(
+        ChefQueryFilter filter,
         int page,
         int pageSize,
         CancellationToken cancellationToken = default);

@@ -19,6 +19,7 @@ public sealed class ChefService : IChefService
     }
 
     public async Task<PagedResult<ChefListItemDto>> ListAsync(
+        ChefQueryFilter filter,
         int page,
         int pageSize,
         CancellationToken cancellationToken = default)
@@ -26,11 +27,11 @@ public sealed class ChefService : IChefService
         page = Math.Max(1, page);
         pageSize = Math.Clamp(pageSize, 1, 50);
 
-        var (items, total) = await _repository.ListAsync(page, pageSize, cancellationToken);
+        var (items, total) = await _repository.ListAsync(filter, page, pageSize, cancellationToken);
         var hasMore = page * pageSize < total;
 
         return new PagedResult<ChefListItemDto>(
-            items.Select(ToListItem).ToList(),
+            items.Select(x => ToListItem(x.Profile, x.DistanceKm)).ToList(),
             page,
             pageSize,
             total,
@@ -73,6 +74,9 @@ public sealed class ChefService : IChefService
             Bio = request.Bio.Trim(),
             City = request.City.Trim(),
             Area = string.IsNullOrWhiteSpace(request.Area) ? null : request.Area.Trim(),
+            Address = string.IsNullOrWhiteSpace(request.Address) ? null : request.Address.Trim(),
+            Latitude = request.Latitude,
+            Longitude = request.Longitude,
             Cuisines = NormalizeCuisines(request.Cuisines),
             CreatedAtUtc = now,
             UpdatedAtUtc = now,
@@ -95,6 +99,9 @@ public sealed class ChefService : IChefService
         profile.Bio = request.Bio.Trim();
         profile.City = request.City.Trim();
         profile.Area = string.IsNullOrWhiteSpace(request.Area) ? null : request.Area.Trim();
+        profile.Address = string.IsNullOrWhiteSpace(request.Address) ? null : request.Address.Trim();
+        profile.Latitude = request.Latitude;
+        profile.Longitude = request.Longitude;
         profile.Cuisines = NormalizeCuisines(request.Cuisines);
         profile.UpdatedAtUtc = DateTime.UtcNow;
 
@@ -115,7 +122,7 @@ public sealed class ChefService : IChefService
             .ToArray();
     }
 
-    private static ChefListItemDto ToListItem(ChefProfile profile)
+    public static ChefListItemDto ToListItem(ChefProfile profile, double? distanceKm = null)
     {
         return new ChefListItemDto
         {
@@ -124,12 +131,16 @@ public sealed class ChefService : IChefService
             Bio = profile.Bio,
             City = profile.City,
             Area = profile.Area,
+            Address = profile.Address,
+            Latitude = profile.Latitude,
+            Longitude = profile.Longitude,
+            DistanceKm = distanceKm,
             Cuisines = profile.Cuisines,
             PhotoUrl = profile.PhotoUrl,
         };
     }
 
-    private static ChefProfileDto ToDto(ChefProfile profile)
+    public static ChefProfileDto ToDto(ChefProfile profile, double? distanceKm = null)
     {
         return new ChefProfileDto
         {
@@ -139,6 +150,10 @@ public sealed class ChefService : IChefService
             Bio = profile.Bio,
             City = profile.City,
             Area = profile.Area,
+            Address = profile.Address,
+            Latitude = profile.Latitude,
+            Longitude = profile.Longitude,
+            DistanceKm = distanceKm,
             Cuisines = profile.Cuisines,
             PhotoUrl = profile.PhotoUrl,
             CreatedAtUtc = profile.CreatedAtUtc,

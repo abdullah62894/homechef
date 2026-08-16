@@ -29,6 +29,10 @@ namespace HomeChef.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("Address")
+                        .HasMaxLength(250)
+                        .HasColumnType("character varying(250)");
+
                     b.Property<string>("Area")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
@@ -55,6 +59,12 @@ namespace HomeChef.Infrastructure.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<double?>("Latitude")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("Longitude")
+                        .HasColumnType("double precision");
+
                     b.Property<string>("PhotoUrl")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
@@ -67,10 +77,255 @@ namespace HomeChef.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Area");
+
+                    b.HasIndex("City");
+
                     b.HasIndex("UserId")
                         .IsUnique();
 
+                    b.HasIndex("City", "Area");
+
+                    b.HasIndex("Latitude", "Longitude");
+
                     b.ToTable("ChefProfiles", "homechef");
+                });
+
+            modelBuilder.Entity("HomeChef.Domain.Favorites.FavoriteChef", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ChefProfileId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ChefProfileId");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("UserId", "ChefProfileId")
+                        .IsUnique();
+
+                    b.ToTable("FavoriteChefs", "homechef");
+                });
+
+            modelBuilder.Entity("HomeChef.Domain.Favorites.FavoriteFood", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<Guid>("FoodItemId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FoodItemId");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("UserId", "FoodItemId")
+                        .IsUnique();
+
+                    b.ToTable("FavoriteFoods", "homechef");
+                });
+
+            modelBuilder.Entity("HomeChef.Domain.Foods.FoodCategory", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<int>("DisplayOrder")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Slug")
+                        .IsUnique();
+
+                    b.ToTable("FoodCategories", "homechef");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("11111111-1111-1111-1111-111111111101"),
+                            CreatedAtUtc = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "Hearty, home-style traditional and continental main meals.",
+                            DisplayOrder = 1,
+                            Name = "Main Course",
+                            Slug = "main-course"
+                        },
+                        new
+                        {
+                            Id = new Guid("11111111-1111-1111-1111-111111111102"),
+                            CreatedAtUtc = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "Aromatic spiced rice, authentic biryanis, and pulao specialties.",
+                            DisplayOrder = 2,
+                            Name = "Rice & Biryani",
+                            Slug = "rice-biryani"
+                        },
+                        new
+                        {
+                            Id = new Guid("11111111-1111-1111-1111-111111111103"),
+                            CreatedAtUtc = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "Rich desi gravies, fresh wok karahis, and slow-cooked curries.",
+                            DisplayOrder = 3,
+                            Name = "Karahi & Curries",
+                            Slug = "karahi-curries"
+                        },
+                        new
+                        {
+                            Id = new Guid("11111111-1111-1111-1111-111111111104"),
+                            CreatedAtUtc = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "Charcoal grilled kebabs, tikkas, and smoked specialties.",
+                            DisplayOrder = 4,
+                            Name = "BBQ & Grills",
+                            Slug = "bbq-grills"
+                        },
+                        new
+                        {
+                            Id = new Guid("11111111-1111-1111-1111-111111111105"),
+                            CreatedAtUtc = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "Freshly baked customized cakes, artisanal breads, pastries, and cookies.",
+                            DisplayOrder = 5,
+                            Name = "Bakery & Cakes",
+                            Slug = "bakery-cakes"
+                        },
+                        new
+                        {
+                            Id = new Guid("11111111-1111-1111-1111-111111111106"),
+                            CreatedAtUtc = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "Decadent puddings, traditional mithai, brownies, and treats.",
+                            DisplayOrder = 6,
+                            Name = "Desserts & Sweets",
+                            Slug = "desserts-sweets"
+                        },
+                        new
+                        {
+                            Id = new Guid("11111111-1111-1111-1111-111111111107"),
+                            CreatedAtUtc = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "Crispy samosas, rolls, chaat, and quick savory bites.",
+                            DisplayOrder = 7,
+                            Name = "Snacks & Appetizers",
+                            Slug = "snacks-appetizers"
+                        },
+                        new
+                        {
+                            Id = new Guid("11111111-1111-1111-1111-111111111108"),
+                            CreatedAtUtc = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "Morning favorites, stuffed parathas, halwa puri, and omelettes.",
+                            DisplayOrder = 8,
+                            Name = "Breakfast & Parathas",
+                            Slug = "breakfast-parathas"
+                        },
+                        new
+                        {
+                            Id = new Guid("11111111-1111-1111-1111-111111111109"),
+                            CreatedAtUtc = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "Homemade drinks, lassi, fresh juices, and specialty teas.",
+                            DisplayOrder = 9,
+                            Name = "Beverages",
+                            Slug = "beverages"
+                        });
+                });
+
+            modelBuilder.Entity("HomeChef.Domain.Foods.FoodItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("CategoryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ChefProfileId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasDefaultValue("PKR");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("ImageUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<bool>("IsAvailable")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<int?>("PreparationTimeMinutes")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("Price")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("timestamptz");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CategoryId");
+
+                    b.HasIndex("ChefProfileId");
+
+                    b.HasIndex("CreatedAtUtc");
+
+                    b.HasIndex("IsAvailable");
+
+                    b.ToTable("FoodItems", "homechef");
                 });
 
             modelBuilder.Entity("HomeChef.Domain.Identity.ApplicationRole", b =>
@@ -179,6 +434,49 @@ namespace HomeChef.Infrastructure.Migrations
                         .HasDatabaseName("UserNameIndex");
 
                     b.ToTable("AspNetUsers", "homechef");
+                });
+
+            modelBuilder.Entity("HomeChef.Domain.Reviews.Review", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ChefProfileId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Comment")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<Guid>("CustomerUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Rating")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("timestamptz");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ChefProfileId");
+
+                    b.HasIndex("CreatedAtUtc");
+
+                    b.HasIndex("CustomerUserId");
+
+                    b.HasIndex("ChefProfileId", "CustomerUserId")
+                        .IsUnique();
+
+                    b.ToTable("Reviews", "homechef", t =>
+                        {
+                            t.HasCheckConstraint("CK_Reviews_Rating_Range", "\"Rating\" >= 1 AND \"Rating\" <= 5");
+                        });
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
@@ -291,6 +589,81 @@ namespace HomeChef.Infrastructure.Migrations
                         .HasForeignKey("HomeChef.Domain.Chefs.ChefProfile", "UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("HomeChef.Domain.Favorites.FavoriteChef", b =>
+                {
+                    b.HasOne("HomeChef.Domain.Chefs.ChefProfile", "ChefProfile")
+                        .WithMany()
+                        .HasForeignKey("ChefProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("HomeChef.Domain.Identity.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ChefProfile");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("HomeChef.Domain.Favorites.FavoriteFood", b =>
+                {
+                    b.HasOne("HomeChef.Domain.Foods.FoodItem", "FoodItem")
+                        .WithMany()
+                        .HasForeignKey("FoodItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("HomeChef.Domain.Identity.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("FoodItem");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("HomeChef.Domain.Foods.FoodItem", b =>
+                {
+                    b.HasOne("HomeChef.Domain.Foods.FoodCategory", "Category")
+                        .WithMany()
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("HomeChef.Domain.Chefs.ChefProfile", "ChefProfile")
+                        .WithMany()
+                        .HasForeignKey("ChefProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Category");
+
+                    b.Navigation("ChefProfile");
+                });
+
+            modelBuilder.Entity("HomeChef.Domain.Reviews.Review", b =>
+                {
+                    b.HasOne("HomeChef.Domain.Chefs.ChefProfile", "ChefProfile")
+                        .WithMany()
+                        .HasForeignKey("ChefProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("HomeChef.Domain.Identity.ApplicationUser", "CustomerUser")
+                        .WithMany()
+                        .HasForeignKey("CustomerUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ChefProfile");
+
+                    b.Navigation("CustomerUser");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>

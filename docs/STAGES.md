@@ -9,10 +9,10 @@ ahead of their stage unless required as architectural foundations.
 | 0 | Architecture & repository setup — scaffold, DB wiring, health endpoint | Done |
 | 1 | Users and authentication — Identity, roles, JWT cookie auth | Done |
 | 2 | Chef profiles | Done |
-| 3 | Food / menu system | Planned |
-| 4 | Search and locations (PostGIS) | Planned |
-| 5 | Reviews and ratings | Planned |
-| 6 | Favorites | Planned |
+| 3 | Food / menu system | Done |
+| 4 | Search and locations — keyword search, city/area directory, proximity | Done |
+| 5 | Reviews and ratings — 1–5 stars, text feedback, summaries, ownership rules | Done |
+| 6 | Favorites — save favorite chefs and dishes, quick toggles, user favorites page | Done |
 | 7 | Contact chef | Planned |
 | 8 | Image storage and optimization | Planned |
 | 9 | Admin and moderation | Planned |

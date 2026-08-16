@@ -19,6 +19,15 @@ public sealed class UpdateChefProfileRequest
     [StringLength(100, ErrorMessage = "Area must be at most 100 characters.")]
     public string? Area { get; set; }
 
+    [StringLength(250, ErrorMessage = "Address must be at most 250 characters.")]
+    public string? Address { get; set; }
+
+    [Range(-90.0, 90.0, ErrorMessage = "Latitude must be between -90 and 90.")]
+    public double? Latitude { get; set; }
+
+    [Range(-180.0, 180.0, ErrorMessage = "Longitude must be between -180 and 180.")]
+    public double? Longitude { get; set; }
+
     /// <summary>Cuisine tags. Cleaned and limited to 10 by the service.</summary>
     public string[]? Cuisines { get; set; }
 }

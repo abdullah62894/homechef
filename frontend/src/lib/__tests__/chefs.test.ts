@@ -49,7 +49,7 @@ describe("chefs lib", () => {
       })
     );
 
-    const result = await listChefs(2, 12);
+    const result = await listChefs({}, 2, 12);
 
     expect(fetchMock.mock.calls[0][0]).toBe(`${baseUrl}/api/chefs?page=2&pageSize=12`);
     expect(result.items).toEqual([profile]);
@@ -59,7 +59,7 @@ describe("chefs lib", () => {
   it("listChefs falls back gracefully when meta is null", async () => {
     fetchMock.mockResolvedValue(jsonResponse(200, { data: [profile], meta: null }));
 
-    const result = await listChefs(1, 20);
+    const result = await listChefs({}, 1, 20);
 
     expect(result).toMatchObject({ page: 1, pageSize: 20, total: 1, hasMore: false });
   });

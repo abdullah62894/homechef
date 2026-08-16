@@ -19,16 +19,34 @@ public sealed class ChefsController : ControllerBase
         _chefService = chefService;
     }
 
-    /// <summary>Lists public chef profiles (paginated).</summary>
+    /// <summary>Lists public chef profiles (paginated, filterable).</summary>
     [HttpGet]
     [AllowAnonymous]
     [ProducesResponseType(typeof(ApiResponse<IReadOnlyList<ChefListItemDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> List(
+        [FromQuery] string? search = null,
+        [FromQuery] string? city = null,
+        [FromQuery] string? area = null,
+        [FromQuery] string? cuisine = null,
+        [FromQuery] double? lat = null,
+        [FromQuery] double? lng = null,
+        [FromQuery] double? radiusKm = null,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,
         CancellationToken cancellationToken = default)
     {
-        var result = await _chefService.ListAsync(page, pageSize, cancellationToken);
+        var filter = new ChefQueryFilter
+        {
+            Search = search,
+            City = city,
+            Area = area,
+            Cuisine = cuisine,
+            Lat = lat,
+            Lng = lng,
+            RadiusKm = radiusKm,
+        };
+
+        var result = await _chefService.ListAsync(filter, page, pageSize, cancellationToken);
 
         return Ok(new ApiResponse<IReadOnlyList<ChefListItemDto>>(
             result.Items,

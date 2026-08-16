@@ -18,7 +18,7 @@ export default function ChefsPage() {
 
   useEffect(() => {
     let cancelled = false;
-    listChefs(page, PAGE_SIZE)
+    listChefs({}, page, PAGE_SIZE)
       .then((result) => {
         if (!cancelled) setState({ status: "ready", items: result.items, hasMore: result.hasMore });
       })

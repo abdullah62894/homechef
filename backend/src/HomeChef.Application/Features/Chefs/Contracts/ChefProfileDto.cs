@@ -12,6 +12,14 @@ public sealed class ChefListItemDto
 
     public string? Area { get; set; }
 
+    public string? Address { get; set; }
+
+    public double? Latitude { get; set; }
+
+    public double? Longitude { get; set; }
+
+    public double? DistanceKm { get; set; }
+
     public string[] Cuisines { get; set; } = [];
 
     public string? PhotoUrl { get; set; }
@@ -30,6 +38,14 @@ public sealed class ChefProfileDto
     public string City { get; set; } = string.Empty;
 
     public string? Area { get; set; }
+
+    public string? Address { get; set; }
+
+    public double? Latitude { get; set; }
+
+    public double? Longitude { get; set; }
+
+    public double? DistanceKm { get; set; }
 
     public string[] Cuisines { get; set; } = [];
 

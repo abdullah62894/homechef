@@ -51,8 +51,17 @@ public class ExceptionHandlingMiddleware
     private static int MapStatusCode(string code) => code switch
     {
         ErrorCodes.InvalidCredentials or ErrorCodes.LockedOut => StatusCodes.Status401Unauthorized,
-        ErrorCodes.EmailTaken or ErrorCodes.ChefProfileExists => StatusCodes.Status409Conflict,
-        ErrorCodes.UserNotFound or ErrorCodes.ChefProfileNotFound => StatusCodes.Status404NotFound,
+        ErrorCodes.FoodItemForbidden or
+            ErrorCodes.SelfReviewForbidden or
+            ErrorCodes.ReviewForbidden => StatusCodes.Status403Forbidden,
+        ErrorCodes.EmailTaken or
+            ErrorCodes.ChefProfileExists or
+            ErrorCodes.DuplicateReview => StatusCodes.Status409Conflict,
+        ErrorCodes.UserNotFound or
+            ErrorCodes.ChefProfileNotFound or
+            ErrorCodes.FoodItemNotFound or
+            ErrorCodes.FoodCategoryNotFound or
+            ErrorCodes.ReviewNotFound => StatusCodes.Status404NotFound,
         _ => StatusCodes.Status400BadRequest,
     };
 

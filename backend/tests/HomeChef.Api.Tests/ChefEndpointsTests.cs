@@ -102,7 +102,7 @@ public class ChefEndpointsTests : IClassFixture<HomeChefApiFactory>
         Assert.Equal(HttpStatusCode.OK, byId.StatusCode);
 
         // Public list (anonymous client) includes the profile with pagination meta.
-        var list = await anonClient.GetAsync("/api/chefs?page=1&pageSize=20");
+        var list = await anonClient.GetAsync("/api/chefs?search=Test%20Kitchen&page=1&pageSize=20");
         Assert.Equal(HttpStatusCode.OK, list.StatusCode);
         var page = await list.Content.ReadFromJsonAsync<ApiResponse<IReadOnlyList<ChefListItemDto>>>();
         Assert.Contains(page!.Data, c => c.Id == created.Data.Id);
@@ -121,7 +121,8 @@ public class ChefEndpointsTests : IClassFixture<HomeChefApiFactory>
         Assert.Equal(1, meta.GetProperty("page").GetInt32());
         Assert.Equal(10, meta.GetProperty("pageSize").GetInt32());
         Assert.True(meta.TryGetProperty("total", out var total) && total.GetInt32() >= 0);
-        Assert.True(meta.TryGetProperty("hasMore", out var hasMore) && hasMore.ValueKind == System.Text.Json.JsonValueKind.False);
+        Assert.True(meta.TryGetProperty("hasMore", out var hasMore));
+        Assert.Equal(1 * 10 < total.GetInt32(), hasMore.GetBoolean());
     }
 
     [Fact]

@@ -1,4 +1,7 @@
 using HomeChef.Application.Features.Chefs;
+using HomeChef.Application.Features.Favorites;
+using HomeChef.Application.Features.Foods;
+using HomeChef.Application.Features.Reviews;
 using HomeChef.Domain.Identity;
 using HomeChef.Infrastructure.Data;
 using HomeChef.Infrastructure.Repositories;
@@ -44,6 +47,10 @@ public static class DependencyInjection
             .AddEntityFrameworkStores<HomeChefDbContext>();
 
         services.AddScoped<IChefProfileRepository, ChefProfileRepository>();
+        services.AddScoped<IFoodCategoryRepository, FoodCategoryRepository>();
+        services.AddScoped<IFoodRepository, FoodRepository>();
+        services.AddScoped<IReviewRepository, ReviewRepository>();
+        services.AddScoped<IFavoriteRepository, FavoriteRepository>();
 
         return services;
     }

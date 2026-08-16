@@ -6,6 +6,10 @@ export interface ChefListItem {
   bio: string;
   city: string;
   area: string | null;
+  address: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  distanceKm: number | null;
   cuisines: string[];
   photoUrl: string | null;
 }
@@ -21,6 +25,9 @@ export interface ChefProfileInput {
   bio: string;
   city: string;
   area?: string | null;
+  address?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
   cuisines?: string[];
 }
 
@@ -45,8 +52,34 @@ async function unwrap<T>(envelope: ApiEnvelope<T>): Promise<T> {
   return envelope.data;
 }
 
-export function listChefs(page = 1, pageSize = 20): Promise<ChefListPage> {
-  return apiFetch<ChefListEnvelope>(`/api/chefs?page=${page}&pageSize=${pageSize}`).then(
+export interface ChefFilterOptions {
+  search?: string;
+  city?: string;
+  area?: string;
+  cuisine?: string;
+  lat?: number;
+  lng?: number;
+  radiusKm?: number;
+}
+
+export function listChefs(
+  filter: ChefFilterOptions = {},
+  page = 1,
+  pageSize = 20
+): Promise<ChefListPage> {
+  const params = new URLSearchParams();
+  params.set("page", page.toString());
+  params.set("pageSize", pageSize.toString());
+
+  if (filter.search) params.set("search", filter.search);
+  if (filter.city) params.set("city", filter.city);
+  if (filter.area) params.set("area", filter.area);
+  if (filter.cuisine) params.set("cuisine", filter.cuisine);
+  if (filter.lat !== undefined) params.set("lat", filter.lat.toString());
+  if (filter.lng !== undefined) params.set("lng", filter.lng.toString());
+  if (filter.radiusKm !== undefined) params.set("radiusKm", filter.radiusKm.toString());
+
+  return apiFetch<ChefListEnvelope>(`/api/chefs?${params.toString()}`).then(
     (envelope) => ({
       items: envelope.data,
       page: envelope.meta?.page ?? page,

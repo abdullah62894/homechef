@@ -1,5 +1,8 @@
 using HomeChef.Domain.Chefs;
+using HomeChef.Domain.Favorites;
+using HomeChef.Domain.Foods;
 using HomeChef.Domain.Identity;
+using HomeChef.Domain.Reviews;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,6 +16,16 @@ public class HomeChefDbContext : IdentityDbContext<ApplicationUser, ApplicationR
     }
 
     public DbSet<ChefProfile> ChefProfiles => Set<ChefProfile>();
+
+    public DbSet<FoodCategory> FoodCategories => Set<FoodCategory>();
+
+    public DbSet<FoodItem> FoodItems => Set<FoodItem>();
+
+    public DbSet<Review> Reviews => Set<Review>();
+
+    public DbSet<FavoriteChef> FavoriteChefs => Set<FavoriteChef>();
+
+    public DbSet<FavoriteFood> FavoriteFoods => Set<FavoriteFood>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

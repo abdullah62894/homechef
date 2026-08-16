@@ -13,4 +13,12 @@ public static class ErrorCodes
     public const string RegistrationFailed = "REGISTRATION_FAILED";
     public const string ChefProfileNotFound = "CHEF_PROFILE_NOT_FOUND";
     public const string ChefProfileExists = "CHEF_PROFILE_EXISTS";
+    public const string ChefProfileRequired = "CHEF_PROFILE_REQUIRED";
+    public const string FoodItemNotFound = "FOOD_ITEM_NOT_FOUND";
+    public const string FoodCategoryNotFound = "FOOD_CATEGORY_NOT_FOUND";
+    public const string FoodItemForbidden = "FOOD_ITEM_FORBIDDEN";
+    public const string ReviewNotFound = "REVIEW_NOT_FOUND";
+    public const string SelfReviewForbidden = "SELF_REVIEW_FORBIDDEN";
+    public const string DuplicateReview = "DUPLICATE_REVIEW";
+    public const string ReviewForbidden = "REVIEW_FORBIDDEN";
 }

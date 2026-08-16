@@ -11,7 +11,7 @@ import {
 } from "@/lib/chefs";
 import { ApiError } from "@/lib/api";
 
-const emptyForm = { displayName: "", bio: "", city: "", area: "", cuisines: "" };
+const emptyForm = { displayName: "", bio: "", city: "", area: "", address: "", latitude: "", longitude: "", cuisines: "" };
 
 export default function ChefProfileMePage() {
   const router = useRouter();
@@ -33,6 +33,9 @@ export default function ChefProfileMePage() {
           bio: profile.bio,
           city: profile.city,
           area: profile.area ?? "",
+          address: profile.address ?? "",
+          latitude: profile.latitude != null ? String(profile.latitude) : "",
+          longitude: profile.longitude != null ? String(profile.longitude) : "",
           cuisines: profile.cuisines.join(", "),
         });
       })
@@ -70,6 +73,9 @@ export default function ChefProfileMePage() {
       bio: form.bio.trim(),
       city: form.city.trim(),
       area: form.area.trim() || null,
+      address: form.address.trim() || null,
+      latitude: form.latitude.trim() ? parseFloat(form.latitude.trim()) : null,
+      longitude: form.longitude.trim() ? parseFloat(form.longitude.trim()) : null,
       cuisines: form.cuisines
         .split(",")
         .map((c) => c.trim())
@@ -101,6 +107,21 @@ export default function ChefProfileMePage() {
         {existing ? "Edit your chef profile" : "Create your chef profile"}
       </h1>
       <p className="mt-2 text-gray-600">Tell hungry customers who you are and what you cook.</p>
+
+      {existing && (
+        <div className="mt-6 rounded-xl border border-gray-200 bg-gray-50 p-4 flex items-center justify-between">
+          <div>
+            <div className="text-sm font-semibold text-gray-900">Manage Your Dishes</div>
+            <div className="text-xs text-gray-600">Add, edit, or toggle availability of menu items.</div>
+          </div>
+          <Link
+            href="/chefs/me/foods"
+            className="rounded-lg bg-gray-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-gray-800 transition"
+          >
+            Manage Menu →
+          </Link>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="mt-8 space-y-4">
         {error && (
@@ -168,6 +189,55 @@ export default function ChefProfileMePage() {
               type="text"
               value={form.area}
               onChange={(event) => update("area", event.target.value)}
+              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 shadow-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label htmlFor="address" className="block text-sm font-medium text-gray-700">
+            Address (optional)
+          </label>
+          <input
+            id="address"
+            type="text"
+            value={form.address}
+            onChange={(event) => update("address", event.target.value)}
+            placeholder="Street address or landmark"
+            className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 shadow-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+          />
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label htmlFor="latitude" className="block text-sm font-medium text-gray-700">
+              Latitude (optional)
+            </label>
+            <input
+              id="latitude"
+              type="number"
+              step="any"
+              min="-90"
+              max="90"
+              value={form.latitude}
+              onChange={(event) => update("latitude", event.target.value)}
+              placeholder="e.g. 24.8607"
+              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 shadow-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+            />
+          </div>
+          <div>
+            <label htmlFor="longitude" className="block text-sm font-medium text-gray-700">
+              Longitude (optional)
+            </label>
+            <input
+              id="longitude"
+              type="number"
+              step="any"
+              min="-180"
+              max="180"
+              value={form.longitude}
+              onChange={(event) => update("longitude", event.target.value)}
+              placeholder="e.g. 67.0011"
               className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 shadow-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
             />
           </div>

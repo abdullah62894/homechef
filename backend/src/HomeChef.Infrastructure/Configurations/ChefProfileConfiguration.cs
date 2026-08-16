@@ -35,6 +35,13 @@ public sealed class ChefProfileConfiguration : IEntityTypeConfiguration<ChefProf
         builder.Property(p => p.Area)
             .HasMaxLength(100);
 
+        builder.Property(p => p.Address)
+            .HasMaxLength(250);
+
+        builder.Property(p => p.Latitude);
+
+        builder.Property(p => p.Longitude);
+
         builder.Property(p => p.Cuisines)
             .HasColumnType("text[]")
             .IsRequired();
@@ -49,5 +56,10 @@ public sealed class ChefProfileConfiguration : IEntityTypeConfiguration<ChefProf
         builder.Property(p => p.UpdatedAtUtc)
             .HasColumnType("timestamptz")
             .IsRequired();
+
+        builder.HasIndex(p => p.City);
+        builder.HasIndex(p => p.Area);
+        builder.HasIndex(p => new { p.City, p.Area });
+        builder.HasIndex(p => new { p.Latitude, p.Longitude });
     }
 }

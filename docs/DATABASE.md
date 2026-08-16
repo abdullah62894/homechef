@@ -45,10 +45,25 @@ Stage 1: ASP.NET Core Identity tables (`AspNetUsers`, `AspNetRoles`, ...) with
 Stage 2: `ChefProfiles` (one-to-one with `AspNetUsers`, unique `UserId` FK,
 `text[]` cuisines). Public discovery lists/detail are read from this table.
 
-Later stages add food items, categories, locations, reviews, favorites,
-contact requests, photos, verification, and moderation tables.
+Stage 3: `FoodCategories` (standard category classifications, unique `Slug` index,
+`DisplayOrder`) and `FoodItems` (`ChefProfileId` FK with cascade delete,
+`CategoryId` FK with set null, `decimal(18,2)` price, `IsAvailable` flag,
+`CreatedAtUtc` indexes).
+
+Stage 4: `ChefProfiles` extended with `Address` (varchar(250)), `Latitude` (double precision),
+and `Longitude` (double precision). Added single and composite indexes: `IX_ChefProfiles_City`,
+`IX_ChefProfiles_Area`, `IX_ChefProfiles_City_Area`, `IX_ChefProfiles_Latitude_Longitude`.
+
+Stage 5: `Reviews` (`Id` Guid PK, `ChefProfileId` FK with cascade delete,
+`CustomerUserId` FK with cascade delete, `Rating` integer with check constraint `1..5`,
+`Comment` varchar(1000), unique index on `(ChefProfileId, CustomerUserId)`,
+indexes on `ChefProfileId`, `CustomerUserId`, `CreatedAtUtc`).
+
+Stage 6: `FavoriteChefs` (`Id` Guid PK, `UserId` FK with cascade delete, `ChefProfileId` FK with cascade delete, unique index on `(UserId, ChefProfileId)`, `CreatedAtUtc`) and `FavoriteFoods` (`Id` Guid PK, `UserId` FK with cascade delete, `FoodItemId` FK with cascade delete, unique index on `(UserId, FoodItemId)`, `CreatedAtUtc`).
+
+Later stages add contact requests, photos,
+verification, and moderation tables.
 
 ## Geographic data
 
-PostGIS will be introduced in Stage 4 (search and locations) for `find near me`
-queries. Until then the schema stays plain PostgreSQL.
+Stage 4 uses Haversine geodesic distance calculation natively with PostgreSQL double-precision coordinate indexing (`Latitude`, `Longitude`) for fast `find near me` / radius filtering without external OS dependencies.
