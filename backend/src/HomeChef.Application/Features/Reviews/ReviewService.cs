@@ -2,7 +2,10 @@ using HomeChef.Application.Common;
 using HomeChef.Application.Common.Errors;
 using HomeChef.Application.Common.Exceptions;
 using HomeChef.Application.Features.Chefs;
+using HomeChef.Application.Features.Notifications;
+using HomeChef.Application.Features.Reports;
 using HomeChef.Application.Features.Reviews.Contracts;
+using HomeChef.Domain.Notifications;
 using HomeChef.Domain.Reviews;
 
 namespace HomeChef.Application.Features.Reviews;
@@ -11,13 +14,19 @@ public sealed class ReviewService : IReviewService
 {
     private readonly IReviewRepository _reviewRepository;
     private readonly IChefProfileRepository _chefProfileRepository;
+    private readonly ContentGuard _contentGuard;
+    private readonly INotificationService _notificationService;
 
     public ReviewService(
         IReviewRepository reviewRepository,
-        IChefProfileRepository chefProfileRepository)
+        IChefProfileRepository chefProfileRepository,
+        ContentGuard contentGuard,
+        INotificationService notificationService)
     {
         _reviewRepository = reviewRepository;
         _chefProfileRepository = chefProfileRepository;
+        _contentGuard = contentGuard;
+        _notificationService = notificationService;
     }
 
     public async Task<PagedResult<ReviewDto>> ListChefReviewsAsync(
@@ -67,6 +76,8 @@ public sealed class ReviewService : IReviewService
             throw new BusinessException(ErrorCodes.SelfReviewForbidden, "Chefs cannot review their own kitchen.");
         }
 
+        _contentGuard.EnsureAllowed(request.Comment);
+
         var existing = await _reviewRepository.GetByChefAndCustomerAsync(chefProfileId, customerUserId, cancellationToken);
         if (existing is not null)
         {
@@ -88,6 +99,14 @@ public sealed class ReviewService : IReviewService
         await _reviewRepository.AddAsync(review, cancellationToken);
 
         var created = await _reviewRepository.GetByIdAsync(review.Id, cancellationToken);
+
+        await _notificationService.NotifyAsync(
+            chef.UserId,
+            NotificationType.NewReview,
+            "New review",
+            $"You received a new {review.Rating}★ review on {chef.DisplayName}.",
+            cancellationToken);
+
         return ToDto(created ?? review);
     }
 
@@ -104,6 +123,8 @@ public sealed class ReviewService : IReviewService
         {
             throw new BusinessException(ErrorCodes.ReviewForbidden, "You are not authorized to edit this review.");
         }
+
+        _contentGuard.EnsureAllowed(request.Comment);
 
         review.Rating = Math.Clamp(request.Rating, 1, 5);
         review.Comment = request.Comment.Trim();

@@ -19,6 +19,7 @@ import {
 } from "@/lib/favorites";
 import { sendChefMessage } from "@/lib/messages";
 import { resolveImageUrl } from "@/lib/images";
+import ReportButton from "@/components/ReportButton";
 import { ApiError } from "@/lib/api";
 
 type LoadState =
@@ -265,14 +266,17 @@ export default function ChefDetailPage() {
               <span
                 key={cuisine}
                 className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700"
-              >
-                {cuisine}
+              >                {cuisine}
               </span>
             ))}
           </div>
         )}
 
         <p className="mt-6 text-base text-gray-700 leading-relaxed whitespace-pre-line">{chef.bio}</p>
+
+        <div className="mt-4 flex justify-end">
+          <ReportButton targetType="ChefProfile" targetId={chef.id} targetName="kitchen" />
+        </div>
       </div>
 
       {/* Contact Chef */}
@@ -519,6 +523,9 @@ export default function ChefDetailPage() {
                   </span>
                 </div>
                 <p className="mt-2 text-sm text-gray-700 leading-relaxed">{rev.comment}</p>
+                <div className="mt-2 flex justify-end">
+                  <ReportButton targetType="Review" targetId={rev.id} targetName="review" />
+                </div>
               </div>
             ))
           )}

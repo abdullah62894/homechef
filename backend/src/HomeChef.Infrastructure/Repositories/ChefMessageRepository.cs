@@ -85,4 +85,11 @@ public sealed class ChefMessageRepository : IMessageRepository
             .AsNoTracking()
             .CountAsync(m => m.ChefProfileId == chefProfileId && m.ReadAtUtc == null, cancellationToken);
     }
+
+    public async Task<int> CountSentByUserSinceAsync(Guid senderUserId, DateTime sinceUtc, CancellationToken cancellationToken = default)
+    {
+        return await _db.ChefMessages
+            .AsNoTracking()
+            .CountAsync(m => m.SenderUserId == senderUserId && m.CreatedAtUtc >= sinceUtc, cancellationToken);
+    }
 }

@@ -4,6 +4,8 @@ using HomeChef.Application.Features.Favorites;
 using HomeChef.Application.Features.Foods;
 using HomeChef.Application.Features.Images;
 using HomeChef.Application.Features.Messages;
+using HomeChef.Application.Features.Notifications;
+using HomeChef.Application.Features.Reports;
 using HomeChef.Application.Features.Reviews;
 using HomeChef.Domain.Identity;
 using HomeChef.Infrastructure.Data;
@@ -58,6 +60,8 @@ public static class DependencyInjection
         services.AddScoped<IMessageRepository, ChefMessageRepository>();
         services.AddSingleton<IImageStorage, LocalImageStorage>();
         services.AddScoped<IAdminRepository, AdminRepository>();
+        services.AddScoped<IReportRepository, ReportRepository>();
+        services.AddScoped<INotificationRepository, NotificationRepository>();
 
         return services;
     }

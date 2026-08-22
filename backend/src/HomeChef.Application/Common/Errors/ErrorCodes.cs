@@ -30,4 +30,13 @@ public static class ErrorCodes
     public const string ImageInvalid = "IMAGE_INVALID";
     public const string AdminSelfSuspendForbidden = "ADMIN_SELF_SUSPEND_FORBIDDEN";
     public const string AdminSuspendAdminForbidden = "ADMIN_SUSPEND_ADMIN_FORBIDDEN";
+    public const string ContentBlocked = "CONTENT_BLOCKED";
+    public const string MessageRateLimited = "MESSAGE_RATE_LIMITED";
+    public const string ReportDuplicate = "REPORT_DUPLICATE";
+    public const string ReportRateLimited = "REPORT_RATE_LIMITED";
+    public const string ReportTargetInvalid = "REPORT_TARGET_INVALID";
+    public const string ReportNotFound = "REPORT_NOT_FOUND";
+    public const string ReportAlreadyHandled = "REPORT_ALREADY_HANDLED";
+    public const string NotificationNotFound = "NOTIFICATION_NOT_FOUND";
+    public const string NotificationForbidden = "NOTIFICATION_FORBIDDEN";
 }

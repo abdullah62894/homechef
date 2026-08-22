@@ -1,4 +1,5 @@
 import { apiFetch, type ApiEnvelope } from "./api";
+import type { Report } from "./reports";
 
 export interface AdminUser {
   id: string;
@@ -98,4 +99,31 @@ export function deleteAdminFood(foodId: string): Promise<void> {
 
 export function deleteAdminChef(chefProfileId: string): Promise<void> {
   return apiFetch<void>(`/api/admin/chefs/${chefProfileId}`, { method: "DELETE" });
+}
+
+export function listAdminReports(
+  status?: "Open" | "Resolved" | "Dismissed",
+  page = 1,
+  pageSize = 20
+): Promise<AdminPage<Report>> {
+  const params = new URLSearchParams();
+  params.set("page", page.toString());
+  params.set("pageSize", pageSize.toString());
+  if (status) params.set("status", status);
+
+  return apiFetch<MetaEnvelope<Report[]>>(`/api/admin/reports?${params.toString()}`).then(
+    (envelope) => toPage(envelope, page, pageSize)
+  );
+}
+
+export function resolveReport(reportId: string): Promise<Report> {
+  return apiFetch<ApiEnvelope<Report>>(`/api/admin/reports/${reportId}/resolve`, {
+    method: "POST",
+  }).then((envelope) => envelope.data);
+}
+
+export function dismissReport(reportId: string): Promise<Report> {
+  return apiFetch<ApiEnvelope<Report>>(`/api/admin/reports/${reportId}/dismiss`, {
+    method: "POST",
+  }).then((envelope) => envelope.data);
 }

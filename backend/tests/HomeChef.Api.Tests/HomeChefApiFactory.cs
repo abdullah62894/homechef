@@ -26,6 +26,9 @@ public class HomeChefApiFactory : WebApplicationFactory<Program>
         // Boots an admin account via the DatabaseInitializer seed (Stage 9).
         builder.UseSetting("Admin:SeedAdminEmail", "admin@homechef.test");
         builder.UseSetting("Admin:SeedAdminPassword", "Admin123!");
+
+        // Known blocklist entry for abuse-prevention tests (Stage 10).
+        builder.UseSetting("Moderation:BlockedWords:0", "badwordtest");
     }
 
     /// <summary>Temp directory into which image uploads are written during tests.</summary>

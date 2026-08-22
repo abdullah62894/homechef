@@ -55,7 +55,8 @@ public class ExceptionHandlingMiddleware
             ErrorCodes.SelfReviewForbidden or
             ErrorCodes.ReviewForbidden or
             ErrorCodes.SelfMessageForbidden or
-            ErrorCodes.MessageForbidden => StatusCodes.Status403Forbidden,
+            ErrorCodes.MessageForbidden or
+            ErrorCodes.NotificationForbidden => StatusCodes.Status403Forbidden,
         ErrorCodes.EmailTaken or
             ErrorCodes.ChefProfileExists or
             ErrorCodes.DuplicateReview => StatusCodes.Status409Conflict,
@@ -64,7 +65,10 @@ public class ExceptionHandlingMiddleware
             ErrorCodes.FoodItemNotFound or
             ErrorCodes.FoodCategoryNotFound or
             ErrorCodes.ReviewNotFound or
-            ErrorCodes.MessageNotFound => StatusCodes.Status404NotFound,
+            ErrorCodes.MessageNotFound or
+            ErrorCodes.ReportNotFound or
+            ErrorCodes.ReportTargetInvalid or
+            ErrorCodes.NotificationNotFound => StatusCodes.Status404NotFound,
         _ => StatusCodes.Status400BadRequest,
     };
 

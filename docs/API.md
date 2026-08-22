@@ -616,6 +616,68 @@ Suspended accounts get `LOCKED_OUT` (401) at login. Note: an already-issued
 JWT cookie stays valid until its expiry; suspensions take effect on the next
 sign-in.
 
+### Reporting and abuse prevention (Stage 10)
+
+Any authenticated user can flag public content for moderation:
+
+| Method | Path | Description |
+| ------ | ---- | ----------- |
+| POST | `/api/reports` | Report a kitchen, dish or review (Authorize) |
+| GET | `/api/admin/reports` | List reports `?status=Open\|Resolved\|Dismissed` (Admin) |
+| POST | `/api/admin/reports/{id}/resolve` | Mark handled — action taken (Admin) |
+| POST | `/api/admin/reports/{id}/dismiss` | Mark handled — no action needed (Admin) |
+
+```json
+// POST /api/reports
+{
+  "targetType": "FoodItem",           // ChefProfile | FoodItem | Review
+  "targetId": "44444444-4444-4444-4444-444444444444",
+  "reason": "Spam",                    // Spam | AbusiveContent | InappropriateImage | Misleading | Other
+  "details": "Optional context for moderators (max 1000 chars)"
+}
+```
+
+Abuse-prevention rules:
+
+- **Text blocklist** — message bodies, review comments and report details are
+  checked against `Moderation:BlockedWords` (normalized substring match);
+  violations return `CONTENT_BLOCKED` (400). Deliberately naive; the admin
+  moderation queue is the real line of defense.
+- **Message rate limit** — max `Messages:MaxPerDay` (default 20) contact
+  messages per sender per day; beyond that `MESSAGE_RATE_LIMITED` (400).
+- **Report flooding** — one open report per user per target
+  (`REPORT_DUPLICATE`, 400) and max `Moderation:MaxReportsPerDay` (default 5)
+  reports per day (`REPORT_RATE_LIMITED`, 400).
+- Unknown targets return `REPORT_TARGET_INVALID` (404); reports on deleted
+  content cascade away with it.
+
+### Notifications (Stage 11)
+
+In-app notifications for the authenticated user. Chefs currently receive
+them when a customer sends a message or leaves a review.
+
+| Method | Path | Description |
+| ------ | ---- | ----------- |
+| GET | `/api/notifications` | List the caller's notifications, newest first (paginated) |
+| GET | `/api/notifications/unread-count` | Unread count |
+| POST | `/api/notifications/{id}/read` | Mark one as read (own notifications only) |
+| POST | `/api/notifications/read-all` | Mark all as read |
+
+```json
+// GET /api/notifications — item shape
+{
+  "id": "9a1c...",
+  "type": "NewReview",               // NewMessage | NewReview
+  "title": "New review",
+  "body": "You received a new 5★ review on Amna's Kitchen.",
+  "readAtUtc": null,
+  "createdAtUtc": "2026-08-22T12:00:00Z"
+}
+```
+
+Errors: `NOTIFICATION_NOT_FOUND` (404), `NOTIFICATION_FORBIDDEN` (403 —
+reading someone else's notification).
+
 ## Pagination
 
 List endpoints use `page` / `pageSize` query parameters and return `meta` with `page`, `pageSize`, `total`, and `hasMore`.

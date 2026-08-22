@@ -23,4 +23,7 @@ public interface IMessageRepository
         CancellationToken cancellationToken = default);
 
     Task<int> CountUnreadAsync(Guid chefProfileId, CancellationToken cancellationToken = default);
+
+    /// <summary>Messages sent by a user since the given instant (abuse rate limiting).</summary>
+    Task<int> CountSentByUserSinceAsync(Guid senderUserId, DateTime sinceUtc, CancellationToken cancellationToken = default);
 }

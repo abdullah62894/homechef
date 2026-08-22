@@ -5,14 +5,18 @@ import Link from "next/link";
 import {
   listAdminUsers,
   listAdminReviews,
+  listAdminReports,
   suspendUser,
   restoreUser,
   deleteAdminReview,
   deleteAdminFood,
   deleteAdminChef,
+  resolveReport,
+  dismissReport,
   type AdminUser,
   type AdminReview,
 } from "@/lib/admin";
+import type { Report } from "@/lib/reports";
 import { listFoods } from "@/lib/foods";
 import { ApiError } from "@/lib/api";
 
@@ -32,6 +36,9 @@ export default function AdminConsolePage() {
   const [reviews, setReviews] = useState<AdminReview[]>([]);
   const [loadingReviews, setLoadingReviews] = useState(true);
 
+  const [reports, setReports] = useState<Report[]>([]);
+  const [loadingReports, setLoadingReports] = useState(true);
+
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -43,6 +50,11 @@ export default function AdminConsolePage() {
 
   const loadReviews = useCallback(async () => {
     const page = await listAdminReviews(1, 20);
+    return page.items;
+  }, []);
+
+  const loadReports = useCallback(async () => {
+    const page = await listAdminReports("Open", 1, 20);
     return page.items;
   }, []);
 
@@ -110,6 +122,27 @@ export default function AdminConsolePage() {
     };
   }, [access.status, loadReviews]);
 
+  useEffect(() => {
+    if (access.status !== "allowed") return;
+    let cancelled = false;
+
+    setLoadingReports(true);
+    loadReports()
+      .then((items) => {
+        if (!cancelled) setReports(items);
+      })
+      .catch((err: unknown) => {
+        if (!cancelled) setError(err instanceof ApiError ? err.message : "Unable to load reports.");
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingReports(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [access.status, loadReports]);
+
   async function runAction(id: string, action: () => Promise<void>, doneMessage: string) {
     setBusyId(id);
     setError(null);
@@ -168,6 +201,20 @@ export default function AdminConsolePage() {
     await runAction(foodId, async () => {
       await deleteAdminFood(foodId);
     }, `"${name}" was deleted.`);
+  }
+
+  async function handleResolveReport(report: Report) {
+    await runAction(report.id, async () => {
+      await resolveReport(report.id);
+      setReports((prev) => prev.filter((r) => r.id !== report.id));
+    }, "Report was resolved.");
+  }
+
+  async function handleDismissReport(report: Report) {
+    await runAction(report.id, async () => {
+      await dismissReport(report.id);
+      setReports((prev) => prev.filter((r) => r.id !== report.id));
+    }, "Report was dismissed.");
   }
 
   if (access.status === "checking") {
@@ -312,6 +359,64 @@ export default function AdminConsolePage() {
               </tbody>
             </table>
           </div>
+        )}
+      </div>
+
+      {/* Reports */}
+      <div className="mt-12">
+        <h2 className="text-xl font-bold tracking-tight">Open reports</h2>
+        {loadingReports ? (
+          <p className="mt-4 text-sm text-gray-500">Loading reports…</p>
+        ) : reports.length === 0 ? (
+          <p className="mt-4 rounded-xl border border-dashed border-gray-300 p-6 text-sm text-gray-500">
+            No open reports — the community is behaving.
+          </p>
+        ) : (
+          <ul className="mt-4 space-y-3">
+            {reports.map((report) => (
+              <li key={report.id} className="rounded-xl border border-amber-200 bg-amber-50/50 p-4">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="text-sm">
+                    <span className="font-semibold text-gray-900">
+                      {report.targetType === "ChefProfile"
+                        ? "Kitchen"
+                        : report.targetType === "FoodItem"
+                          ? "Dish"
+                          : "Review"}
+                    </span>
+                    <span className="text-gray-700"> · {report.targetLabel || report.targetId}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-gray-500">
+                    <span className="rounded bg-gray-100 px-2 py-0.5 font-medium">{report.reason}</span>
+                    <span>
+                      {new Date(report.createdAtUtc).toLocaleString()} · by {report.reporterName}
+                    </span>
+                  </div>
+                </div>
+                {report.details && (
+                  <p className="mt-2 text-sm text-gray-700">{report.details}</p>
+                )}
+                <div className="mt-3 flex justify-end gap-3">
+                  <button
+                    type="button"
+                    onClick={() => handleDismissReport(report)}
+                    disabled={busyId === report.id}
+                    className="font-medium text-gray-600 hover:text-gray-900 underline text-xs disabled:opacity-50"
+                  >
+                    Dismiss
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleResolveReport(report)}
+                    disabled={busyId === report.id}
+                    className="font-medium text-emerald-700 hover:text-emerald-900 underline text-xs disabled:opacity-50"
+                  >
+                    Resolve
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
         )}
       </div>
 

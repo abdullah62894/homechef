@@ -11,6 +11,13 @@ import {
   markMessageRead,
   type ChefMessage,
 } from "@/lib/messages";
+import {
+  listNotifications,
+  markAllNotificationsRead,
+  markNotificationRead,
+  getUnreadNotificationCount,
+  type AppNotification,
+} from "@/lib/notifications";
 import { ApiError } from "@/lib/api";
 
 export default function MePage() {
@@ -22,6 +29,9 @@ export default function MePage() {
   const [unread, setUnread] = useState(0);
   const [sent, setSent] = useState<ChefMessage[]>([]);
   const [markingReadId, setMarkingReadId] = useState<string | null>(null);
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
+  const [markingAllRead, setMarkingAllRead] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -35,6 +45,16 @@ export default function MePage() {
           listSentMessages(1, 50)
             .then((page) => {
               if (!cancelled) setSent(page.items);
+            })
+            .catch(() => {}),
+          listNotifications(1, 20)
+            .then((page) => {
+              if (!cancelled) setNotifications(page.items);
+            })
+            .catch(() => {}),
+          getUnreadNotificationCount()
+            .then((count) => {
+              if (!cancelled) setUnreadNotifications(count);
             })
             .catch(() => {}),
         ];
@@ -92,6 +112,35 @@ export default function MePage() {
   async function handleLogout() {
     await logoutUser();
     router.push("/");
+  }
+
+  async function handleMarkNotificationRead(notification: AppNotification) {
+    try {
+      await markNotificationRead(notification.id);
+      setNotifications((prev) =>
+        prev.map((n) =>
+          n.id === notification.id ? { ...n, readAtUtc: new Date().toISOString() } : n
+        )
+      );
+      setUnreadNotifications((prev) => Math.max(0, prev - 1));
+    } catch {
+      // Ignored — stays unread visually.
+    }
+  }
+
+  async function handleMarkAllNotificationsRead() {
+    setMarkingAllRead(true);
+    try {
+      await markAllNotificationsRead();
+      setNotifications((prev) =>
+        prev.map((n) => (n.readAtUtc ? n : { ...n, readAtUtc: new Date().toISOString() }))
+      );
+      setUnreadNotifications(0);
+    } catch {
+      // Ignored.
+    } finally {
+      setMarkingAllRead(false);
+    }
   }
 
   if (loading) {
@@ -218,6 +267,70 @@ export default function MePage() {
           )}
         </div>
       )}
+
+      <div className="mt-10">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-3">
+            <h2 className="text-xl font-bold tracking-tight">Notifications</h2>
+            {unreadNotifications > 0 && (
+              <span className="rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-semibold text-red-700">
+                {unreadNotifications} new
+              </span>
+            )}
+          </div>
+          {notifications.length > 0 && (
+            <button
+              type="button"
+              onClick={handleMarkAllNotificationsRead}
+              disabled={markingAllRead || unreadNotifications === 0}
+              className="text-xs font-medium text-gray-600 underline hover:text-gray-900 disabled:opacity-50"
+            >
+              {markingAllRead ? "Marking…" : "Mark all as read"}
+            </button>
+          )}
+        </div>
+
+        {notifications.length === 0 ? (
+          <p className="mt-4 rounded-xl border border-dashed border-gray-300 p-6 text-sm text-gray-500">
+            No notifications yet. You&apos;ll be notified here when customers contact you or leave reviews.
+          </p>
+        ) : (
+          <ul className="mt-4 space-y-3">
+            {notifications.map((notification) => (
+              <li
+                key={notification.id}
+                className={`rounded-xl border p-4 ${
+                  notification.readAtUtc
+                    ? "border-gray-200 bg-white"
+                    : "border-gray-900/20 bg-gray-50"
+                }`}
+              >
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="text-sm font-semibold text-gray-900">
+                    {notification.type === "NewReview" ? "⭐ " : "✉️ "}
+                    {notification.title}
+                  </span>
+                  <span className="text-xs text-gray-400">
+                    {new Date(notification.createdAtUtc).toLocaleString()}
+                  </span>
+                </div>
+                <p className="mt-1 text-sm text-gray-700">{notification.body}</p>
+                <div className="mt-2 flex justify-end">
+                  {!notification.readAtUtc && (
+                    <button
+                      type="button"
+                      onClick={() => handleMarkNotificationRead(notification)}
+                      className="rounded-lg border border-gray-300 px-3 py-1 text-xs font-medium hover:bg-gray-100"
+                    >
+                      Mark as read
+                    </button>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
 
       <div className="mt-10">
         <h2 className="text-xl font-bold tracking-tight">Messages you sent</h2>

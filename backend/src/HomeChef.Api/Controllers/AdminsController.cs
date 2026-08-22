@@ -2,7 +2,10 @@ using System.Security.Claims;
 using HomeChef.Api.Common;
 using HomeChef.Application.Features.Admin;
 using HomeChef.Application.Features.Admin.Contracts;
+using HomeChef.Application.Features.Reports;
+using HomeChef.Application.Features.Reports.Contracts;
 using HomeChef.Domain.Constants;
+using HomeChef.Domain.Reports;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -17,10 +20,12 @@ namespace HomeChef.Api.Controllers;
 public sealed class AdminsController : ControllerBase
 {
     private readonly IAdminService _adminService;
+    private readonly IReportService _reportService;
 
-    public AdminsController(IAdminService adminService)
+    public AdminsController(IAdminService adminService, IReportService reportService)
     {
         _adminService = adminService;
+        _reportService = reportService;
     }
 
     /// <summary>Lists accounts with roles and suspension state.</summary>
@@ -107,5 +112,45 @@ public sealed class AdminsController : ControllerBase
     {
         await _adminService.DeleteChefProfileAsync(chefProfileId, cancellationToken);
         return NoContent();
+    }
+
+    /// <summary>Lists content reports for moderation (Stage 10).</summary>
+    [HttpGet("reports")]
+    [ProducesResponseType(typeof(ApiResponse<IReadOnlyList<ReportDto>>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> ListReports(
+        [FromQuery] ReportStatus? status = null,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await _reportService.ListAsync(status, page, pageSize, cancellationToken);
+
+        return Ok(new ApiResponse<IReadOnlyList<ReportDto>>(
+            result.Items,
+            new { result.Page, result.PageSize, result.Total, result.HasMore }));
+    }
+
+    /// <summary>Marks a report as resolved (action taken).</summary>
+    [HttpPost("reports/{id:guid}/resolve")]
+    [ProducesResponseType(typeof(ApiResponse<ReportDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> ResolveReport(Guid id, CancellationToken cancellationToken)
+    {
+        var adminUserId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var report = await _reportService.ResolveAsync(adminUserId, id, cancellationToken);
+
+        return Ok(new ApiResponse<ReportDto>(report));
+    }
+
+    /// <summary>Marks a report as dismissed (no action needed).</summary>
+    [HttpPost("reports/{id:guid}/dismiss")]
+    [ProducesResponseType(typeof(ApiResponse<ReportDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DismissReport(Guid id, CancellationToken cancellationToken)
+    {
+        var adminUserId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var report = await _reportService.DismissAsync(adminUserId, id, cancellationToken);
+
+        return Ok(new ApiResponse<ReportDto>(report));
     }
 }

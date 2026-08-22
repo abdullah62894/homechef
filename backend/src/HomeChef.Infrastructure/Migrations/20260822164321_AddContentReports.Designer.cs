@@ -3,6 +3,7 @@ using System;
 using HomeChef.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace HomeChef.Infrastructure.Migrations
 {
     [DbContext(typeof(HomeChefDbContext))]
-    partial class HomeChefDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260822164321_AddContentReports")]
+    partial class AddContentReports
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -480,45 +483,6 @@ namespace HomeChef.Infrastructure.Migrations
                     b.ToTable("ChefMessages", "homechef");
                 });
 
-            modelBuilder.Entity("HomeChef.Domain.Notifications.Notification", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Body")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<DateTime>("CreatedAtUtc")
-                        .HasColumnType("timestamptz");
-
-                    b.Property<DateTime?>("ReadAtUtc")
-                        .HasColumnType("timestamptz");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<int>("Type")
-                        .HasColumnType("integer");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CreatedAtUtc");
-
-                    b.HasIndex("UserId");
-
-                    b.HasIndex("UserId", "ReadAtUtc");
-
-                    b.ToTable("Notifications", "homechef");
-                });
-
             modelBuilder.Entity("HomeChef.Domain.Reports.ContentReport", b =>
                 {
                     b.Property<Guid>("Id")
@@ -807,17 +771,6 @@ namespace HomeChef.Infrastructure.Migrations
                     b.Navigation("ChefProfile");
 
                     b.Navigation("Sender");
-                });
-
-            modelBuilder.Entity("HomeChef.Domain.Notifications.Notification", b =>
-                {
-                    b.HasOne("HomeChef.Domain.Identity.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("HomeChef.Domain.Reports.ContentReport", b =>

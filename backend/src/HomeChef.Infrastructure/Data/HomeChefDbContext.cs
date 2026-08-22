@@ -3,6 +3,8 @@ using HomeChef.Domain.Favorites;
 using HomeChef.Domain.Foods;
 using HomeChef.Domain.Identity;
 using HomeChef.Domain.Messages;
+using HomeChef.Domain.Notifications;
+using HomeChef.Domain.Reports;
 using HomeChef.Domain.Reviews;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -29,6 +31,10 @@ public class HomeChefDbContext : IdentityDbContext<ApplicationUser, ApplicationR
     public DbSet<FavoriteFood> FavoriteFoods => Set<FavoriteFood>();
 
     public DbSet<ChefMessage> ChefMessages => Set<ChefMessage>();
+
+    public DbSet<ContentReport> ContentReports => Set<ContentReport>();
+
+    public DbSet<Notification> Notifications => Set<Notification>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

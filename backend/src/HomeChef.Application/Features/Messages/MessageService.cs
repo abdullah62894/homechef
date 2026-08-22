@@ -3,7 +3,11 @@ using HomeChef.Application.Common.Errors;
 using HomeChef.Application.Common.Exceptions;
 using HomeChef.Application.Features.Chefs;
 using HomeChef.Application.Features.Messages.Contracts;
+using HomeChef.Application.Features.Notifications;
+using HomeChef.Application.Features.Reports;
 using HomeChef.Domain.Messages;
+using HomeChef.Domain.Notifications;
+using Microsoft.Extensions.Options;
 
 namespace HomeChef.Application.Features.Messages;
 
@@ -11,13 +15,22 @@ public sealed class MessageService : IMessageService
 {
     private readonly IMessageRepository _messageRepository;
     private readonly IChefProfileRepository _chefRepository;
+    private readonly ContentGuard _contentGuard;
+    private readonly MessagingOptions _options;
+    private readonly INotificationService _notificationService;
 
     public MessageService(
         IMessageRepository messageRepository,
-        IChefProfileRepository chefRepository)
+        IChefProfileRepository chefRepository,
+        ContentGuard contentGuard,
+        IOptions<MessagingOptions> options,
+        INotificationService notificationService)
     {
         _messageRepository = messageRepository;
         _chefRepository = chefRepository;
+        _contentGuard = contentGuard;
+        _options = options.Value;
+        _notificationService = notificationService;
     }
 
     public async Task<ChefMessageDto> SendToChefAsync(
@@ -33,6 +46,16 @@ public sealed class MessageService : IMessageService
             throw new BusinessException(ErrorCodes.SelfMessageForbidden, "You cannot contact your own kitchen.");
         }
 
+        _contentGuard.EnsureAllowed(request.Body);
+
+        var since = DateTime.UtcNow.AddDays(-1);
+        if (await _messageRepository.CountSentByUserSinceAsync(senderUserId, since, cancellationToken) >= _options.MaxPerDay)
+        {
+            throw new BusinessException(
+                ErrorCodes.MessageRateLimited,
+                $"You have sent the maximum number of {_options.MaxPerDay} messages for today.");
+        }
+
         var message = new ChefMessage
         {
             Id = Guid.NewGuid(),
@@ -43,6 +66,14 @@ public sealed class MessageService : IMessageService
         };
 
         await _messageRepository.AddAsync(message, cancellationToken);
+
+        var preview = message.Body.Length <= 100 ? message.Body : message.Body[..100] + "…";
+        await _notificationService.NotifyAsync(
+            chef.UserId,
+            NotificationType.NewMessage,
+            "New message",
+            preview,
+            cancellationToken);
 
         return ToDto(message, chef.DisplayName);
     }

@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { getFood, type FoodItem } from "@/lib/foods";
 import { resolveImageUrl } from "@/lib/images";
+import ReportButton from "@/components/ReportButton";
 import {
   addFoodFavorite,
   getUserFavoriteIds,
@@ -160,6 +161,9 @@ export default function FoodDetailPage() {
               <p className="mt-2 text-base leading-relaxed text-gray-700 whitespace-pre-line">
                 {food.description}
               </p>
+              <div className="mt-4 flex justify-end">
+                <ReportButton targetType="FoodItem" targetId={food.id} targetName="dish" />
+              </div>
             </div>
           </div>
         </div>
