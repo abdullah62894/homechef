@@ -497,6 +497,47 @@ Public query filter:
 }
 ```
 
+### Contact chef (Stage 7)
+
+| Method | Path | Description |
+| ------ | ---- | ----------- |
+| POST | `/api/messages` | Send a message to a chef (Authorize) |
+| GET | `/api/messages/inbox` | List messages received by the authenticated chef (RequireChef, paginated, newest first) |
+| GET | `/api/messages/unread-count` | Authenticated chef's unread message count (RequireChef) |
+| GET | `/api/messages/sent` | List messages the authenticated user sent to chefs (Authorize, paginated) |
+| POST | `/api/messages/{messageId}/read` | Mark a message in the chef's inbox as read (RequireChef) |
+
+#### POST `/api/messages`
+
+```json
+// request
+{
+  "chefProfileId": "17994471-e812-4da7-ae46-441555e5f09a",
+  "body": "Hi! Can you prepare a family-sized order this weekend?"
+}
+```
+
+```json
+// 201 response
+{
+  "data": {
+    "id": "8f2c9a30-5b7e-4d1c-9f3a-6a1e2b4c7d90",
+    "chefProfileId": "17994471-e812-4da7-ae46-441555e5f09a",
+    "chefDisplayName": "Amna's Kitchen",
+    "senderUserId": "c11a1f2e-93b0-4a44-8f7c-2f6f0d5b8e21",
+    "senderName": "Bilal Khan",
+    "body": "Hi! Can you prepare a family-sized order this weekend?",
+    "readAtUtc": null,
+    "createdAtUtc": "2026-08-22T10:00:00Z"
+  }
+}
+```
+
+Errors: `CHEF_PROFILE_NOT_FOUND` (404), `SELF_MESSAGE_FORBIDDEN` (403 — a chef cannot
+contact their own kitchen), `VALIDATION_ERROR` (400 — body 1–2000 chars).
+Marking a read requires owning the recipient chef profile; otherwise
+`MESSAGE_FORBIDDEN` (403).
+
 ## Pagination
 
 List endpoints use `page` / `pageSize` query parameters and return `meta` with `page`, `pageSize`, `total`, and `hasMore`.

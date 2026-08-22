@@ -14,10 +14,14 @@ using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 
+// Containers have strict inotify limits (e.g. Render free tier); disable
+// config-file reload watchers BEFORE CreateBuilder initializes default configuration sources.
+Environment.SetEnvironmentVariable("DOTNET_HOSTBUILDER__RELOADCONFIGONCHANGE", "false");
+Environment.SetEnvironmentVariable("DOTNET_USE_POLLING_FILE_WATCHER", "true");
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Containers have strict inotify limits (e.g. Render free tier); disable
-// config-file reload watchers so startup doesn't throw IOException.
+// Defensive safeguard: ensure any file configuration sources do not reload on change
 foreach (var source in builder.Configuration.Sources)
 {
     if (source is Microsoft.Extensions.Configuration.FileConfigurationSource fileSource)

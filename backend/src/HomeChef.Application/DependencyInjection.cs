@@ -2,6 +2,7 @@ using HomeChef.Application.Features.Auth;
 using HomeChef.Application.Features.Chefs;
 using HomeChef.Application.Features.Favorites;
 using HomeChef.Application.Features.Foods;
+using HomeChef.Application.Features.Messages;
 using HomeChef.Application.Features.Reviews;
 using HomeChef.Application.Features.Search;
 using HomeChef.Application.Security;
@@ -23,6 +24,7 @@ public static class DependencyInjection
         services.AddScoped<ISearchService, SearchService>();
         services.AddScoped<IReviewService, ReviewService>();
         services.AddScoped<IFavoriteService, FavoriteService>();
+        services.AddScoped<IMessageService, MessageService>();
 
         return services;
     }

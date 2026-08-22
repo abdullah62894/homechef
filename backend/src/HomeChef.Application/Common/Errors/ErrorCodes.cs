@@ -21,4 +21,8 @@ public static class ErrorCodes
     public const string SelfReviewForbidden = "SELF_REVIEW_FORBIDDEN";
     public const string DuplicateReview = "DUPLICATE_REVIEW";
     public const string ReviewForbidden = "REVIEW_FORBIDDEN";
+    public const string MessageNotFound = "MESSAGE_NOT_FOUND";
+    public const string MessageForbidden = "MESSAGE_FORBIDDEN";
+    public const string SelfMessageForbidden = "SELF_MESSAGE_FORBIDDEN";
+    public const string ChefProfileMissing = "CHEF_PROFILE_MISSING";
 }

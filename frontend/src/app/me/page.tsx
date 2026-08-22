@@ -4,6 +4,13 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { fetchMe, logoutUser, type UserDto } from "@/lib/auth";
+import {
+  getUnreadCount,
+  listInboxMessages,
+  listSentMessages,
+  markMessageRead,
+  type ChefMessage,
+} from "@/lib/messages";
 import { ApiError } from "@/lib/api";
 
 export default function MePage() {
@@ -11,12 +18,43 @@ export default function MePage() {
   const [user, setUser] = useState<UserDto | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [inbox, setInbox] = useState<ChefMessage[]>([]);
+  const [unread, setUnread] = useState(0);
+  const [sent, setSent] = useState<ChefMessage[]>([]);
+  const [markingReadId, setMarkingReadId] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     fetchMe()
       .then((me) => {
-        if (!cancelled) setUser(me);
+        if (cancelled) return;
+        setUser(me);
+
+        const isChef = me.roles.includes("Chef");
+        const loaders: Promise<void>[] = [
+          listSentMessages(1, 50)
+            .then((page) => {
+              if (!cancelled) setSent(page.items);
+            })
+            .catch(() => {}),
+        ];
+
+        if (isChef) {
+          loaders.push(
+            getUnreadCount()
+              .then((count) => {
+                if (!cancelled) setUnread(count);
+              })
+              .catch(() => {}),
+            listInboxMessages(1, 50)
+              .then((page) => {
+                if (!cancelled) setInbox(page.items);
+              })
+              .catch(() => {})
+          );
+        }
+
+        return Promise.all(loaders).then(() => undefined);
       })
       .catch((err) => {
         if (cancelled) return;
@@ -33,6 +71,23 @@ export default function MePage() {
       cancelled = true;
     };
   }, [router]);
+
+  async function handleMarkRead(message: ChefMessage) {
+    setMarkingReadId(message.id);
+    try {
+      await markMessageRead(message.id);
+      setInbox((prev) =>
+        prev.map((m) =>
+          m.id === message.id ? { ...m, readAtUtc: new Date().toISOString() } : m
+        )
+      );
+      setUnread((prev) => Math.max(0, prev - 1));
+    } catch {
+      // Ignored — the message stays unread visually.
+    } finally {
+      setMarkingReadId(null);
+    }
+  }
 
   async function handleLogout() {
     await logoutUser();
@@ -85,6 +140,97 @@ export default function MePage() {
             </dd>
           </div>
         </dl>
+      </div>
+
+      {user.roles.includes("Chef") && (
+        <div className="mt-10">
+          <div className="flex items-center gap-3">
+            <h2 className="text-xl font-bold tracking-tight">Inbox</h2>
+            {unread > 0 && (
+              <span className="rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-semibold text-red-700">
+                {unread} unread
+              </span>
+            )}
+          </div>
+
+          {inbox.length === 0 ? (
+            <p className="mt-4 rounded-xl border border-dashed border-gray-300 p-6 text-sm text-gray-500">
+              No customer messages yet.
+            </p>
+          ) : (
+            <ul className="mt-4 space-y-3">
+              {inbox.map((message) => (
+                <li
+                  key={message.id}
+                  className={`rounded-xl border p-4 ${
+                    message.readAtUtc ? "border-gray-200 bg-white" : "border-gray-900/20 bg-gray-50"
+                  }`}
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="text-sm font-semibold text-gray-900">
+                      {message.senderName || "Customer"}
+                    </span>
+                    <span className="text-xs text-gray-400">
+                      {new Date(message.createdAtUtc).toLocaleString()}
+                    </span>
+                  </div>
+                  <p className="mt-2 text-sm text-gray-700 whitespace-pre-line">{message.body}</p>
+                  <div className="mt-3 flex items-center justify-between">
+                    {!message.readAtUtc ? (
+                      <button
+                        type="button"
+                        onClick={() => handleMarkRead(message)}
+                        disabled={markingReadId === message.id}
+                        className="rounded-lg border border-gray-300 px-3 py-1 text-xs font-medium hover:bg-gray-100 disabled:opacity-50"
+                      >
+                        {markingReadId === message.id ? "Marking…" : "Mark as read"}
+                      </button>
+                    ) : (
+                      <span className="text-xs text-gray-400">Read</span>
+                    )}
+                    <Link
+                      href={`/chefs/${message.chefProfileId}`}
+                      className="text-xs text-gray-500 underline"
+                    >
+                      View your kitchen
+                    </Link>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+
+      <div className="mt-10">
+        <h2 className="text-xl font-bold tracking-tight">Messages you sent</h2>
+        {sent.length === 0 ? (
+          <p className="mt-4 rounded-xl border border-dashed border-gray-300 p-6 text-sm text-gray-500">
+            You haven&apos;t contacted any chefs yet. Open a chef&apos;s page and use the contact form.
+          </p>
+        ) : (
+          <ul className="mt-4 space-y-3">
+            {sent.map((message) => (
+              <li key={message.id} className="rounded-xl border border-gray-200 p-4">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <Link
+                    href={`/chefs/${message.chefProfileId}`}
+                    className="text-sm font-semibold text-gray-900 underline-offset-2 hover:underline"
+                  >
+                    {message.chefDisplayName}
+                  </Link>
+                  <span className="text-xs text-gray-400">
+                    {new Date(message.createdAtUtc).toLocaleString()}
+                  </span>
+                </div>
+                <p className="mt-2 text-sm text-gray-700 whitespace-pre-line">{message.body}</p>
+                <span className="mt-2 inline-block text-xs text-gray-400">
+                  {message.readAtUtc ? "Read by chef" : "Delivered"}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
       <div className="mt-8 flex items-center gap-4">

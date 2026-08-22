@@ -13,7 +13,7 @@ ahead of their stage unless required as architectural foundations.
 | 4 | Search and locations — keyword search, city/area directory, proximity | Done |
 | 5 | Reviews and ratings — 1–5 stars, text feedback, summaries, ownership rules | Done |
 | 6 | Favorites — save favorite chefs and dishes, quick toggles, user favorites page | Done |
-| 7 | Contact chef | Planned |
+| 7 | Contact chef — customers message chefs, chef inbox with unread counts and read receipts | Done |
 | 8 | Image storage and optimization | Planned |
 | 9 | Admin and moderation | Planned |
 | 10 | Reporting and abuse prevention | Planned |

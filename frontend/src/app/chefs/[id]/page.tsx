@@ -17,6 +17,7 @@ import {
   getUserFavoriteIds,
   removeChefFavorite,
 } from "@/lib/favorites";
+import { sendChefMessage } from "@/lib/messages";
 import { ApiError } from "@/lib/api";
 
 type LoadState =
@@ -42,6 +43,12 @@ export default function ChefDetailPage() {
   const [submittingReview, setSubmittingReview] = useState(false);
   const [reviewError, setReviewError] = useState<string | null>(null);
   const [reviewSuccess, setReviewSuccess] = useState<string | null>(null);
+
+  // Contact form state
+  const [contactBody, setContactBody] = useState("");
+  const [sendingContact, setSendingContact] = useState(false);
+  const [contactError, setContactError] = useState<string | null>(null);
+  const [contactSuccess, setContactSuccess] = useState<string | null>(null);
 
   const loadData = useCallback(() => {
     return Promise.all([
@@ -104,6 +111,31 @@ export default function ChefDetailPage() {
       // Ignored
     } finally {
       setTogglingFav(false);
+    }
+  }
+
+  async function handleContactSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setContactError(null);
+    setContactSuccess(null);
+    setSendingContact(true);
+
+    try {
+      await sendChefMessage({ chefProfileId: id, body: contactBody.trim() });
+      setContactSuccess("Message sent! The chef will get back to you soon.");
+      setContactBody("");
+    } catch (err: unknown) {
+      if (err instanceof ApiError) {
+        if (err.status === 401) {
+          setContactError("Please sign in to contact this chef.");
+        } else {
+          setContactError(err.message);
+        }
+      } else {
+        setContactError("Failed to send your message. Please try again.");
+      }
+    } finally {
+      setSendingContact(false);
     }
   }
 
@@ -230,6 +262,47 @@ export default function ChefDetailPage() {
         )}
 
         <p className="mt-6 text-base text-gray-700 leading-relaxed whitespace-pre-line">{chef.bio}</p>
+      </div>
+
+      {/* Contact Chef */}
+      <div className="mt-8 rounded-2xl border border-gray-200 bg-white p-6 sm:p-8">
+        <h2 className="text-lg font-semibold text-gray-900">Contact {chef.displayName}</h2>
+        <p className="mt-1 text-xs text-gray-500">
+          Ask about availability, custom orders, or delivery — your message goes straight to the chef&apos;s inbox.
+        </p>
+
+        <form onSubmit={handleContactSubmit} className="mt-4 space-y-3">
+          {contactError && (
+            <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-700">
+              {contactError}
+            </div>
+          )}
+          {contactSuccess && (
+            <div className="rounded-lg border border-green-200 bg-green-50 p-3 text-xs text-green-700">
+              {contactSuccess}
+            </div>
+          )}
+
+          <textarea
+            id={`contact-${chef.id}`}
+            required
+            minLength={1}
+            maxLength={2000}
+            rows={3}
+            value={contactBody}
+            onChange={(e) => setContactBody(e.target.value)}
+            placeholder="e.g. Hi! Can you prepare a family-sized order for this weekend?"
+            className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-xs focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+          />
+
+          <button
+            type="submit"
+            disabled={sendingContact}
+            className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white shadow-xs hover:bg-gray-800 transition disabled:opacity-50"
+          >
+            {sendingContact ? "Sending…" : "Send message"}
+          </button>
+        </form>
       </div>
 
       {/* Chef's Food / Menu Items */}

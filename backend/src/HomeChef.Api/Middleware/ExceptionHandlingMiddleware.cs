@@ -53,7 +53,9 @@ public class ExceptionHandlingMiddleware
         ErrorCodes.InvalidCredentials or ErrorCodes.LockedOut => StatusCodes.Status401Unauthorized,
         ErrorCodes.FoodItemForbidden or
             ErrorCodes.SelfReviewForbidden or
-            ErrorCodes.ReviewForbidden => StatusCodes.Status403Forbidden,
+            ErrorCodes.ReviewForbidden or
+            ErrorCodes.SelfMessageForbidden or
+            ErrorCodes.MessageForbidden => StatusCodes.Status403Forbidden,
         ErrorCodes.EmailTaken or
             ErrorCodes.ChefProfileExists or
             ErrorCodes.DuplicateReview => StatusCodes.Status409Conflict,
@@ -61,7 +63,8 @@ public class ExceptionHandlingMiddleware
             ErrorCodes.ChefProfileNotFound or
             ErrorCodes.FoodItemNotFound or
             ErrorCodes.FoodCategoryNotFound or
-            ErrorCodes.ReviewNotFound => StatusCodes.Status404NotFound,
+            ErrorCodes.ReviewNotFound or
+            ErrorCodes.MessageNotFound => StatusCodes.Status404NotFound,
         _ => StatusCodes.Status400BadRequest,
     };
 

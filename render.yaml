@@ -14,6 +14,12 @@ services:
     envVars:
       - key: ASPNETCORE_ENVIRONMENT
         value: Production
+      - key: DOTNET_HOSTBUILDER__RELOADCONFIGONCHANGE
+        value: "false"
+      - key: DOTNET_USE_POLLING_FILE_WATCHER
+        value: "true"
+      - key: DOTNET_EnableDiagnostics
+        value: "0"
       - key: Database__AutoMigrate
         value: "true"
       - key: ConnectionStrings__Default
