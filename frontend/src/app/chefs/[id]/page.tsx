@@ -18,6 +18,7 @@ import {
   removeChefFavorite,
 } from "@/lib/favorites";
 import { sendChefMessage } from "@/lib/messages";
+import { resolveImageUrl } from "@/lib/images";
 import { ApiError } from "@/lib/api";
 
 type LoadState =
@@ -211,13 +212,23 @@ export default function ChefDetailPage() {
       {/* Chef Profile Header */}
       <div className="mt-6 rounded-2xl border border-gray-200 bg-white p-6 sm:p-8">
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">{chef.displayName}</h1>
-            <p className="mt-2 text-base text-gray-600">
-              📍 {chef.city}
-              {chef.area ? `, ${chef.area}` : ""}
-              {chef.address ? ` • ${chef.address}` : ""}
-            </p>
+          <div className="flex items-start gap-4">
+            {resolveImageUrl(chef.photoThumbnailUrl ?? chef.photoUrl) && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={resolveImageUrl(chef.photoThumbnailUrl ?? chef.photoUrl) ?? ""}
+                alt={chef.displayName}
+                className="h-20 w-20 rounded-full border border-gray-200 object-cover"
+              />
+            )}
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">{chef.displayName}</h1>
+              <p className="mt-2 text-base text-gray-600">
+                📍 {chef.city}
+                {chef.area ? `, ${chef.area}` : ""}
+                {chef.address ? ` • ${chef.address}` : ""}
+              </p>
+            </div>
           </div>
 
           {/* Actions & Rating Badge */}

@@ -3,6 +3,7 @@ using HomeChef.Application.Common.Errors;
 using HomeChef.Application.Common.Exceptions;
 using HomeChef.Application.Features.Chefs;
 using HomeChef.Application.Features.Foods.Contracts;
+using HomeChef.Application.Features.Images.Contracts;
 using HomeChef.Domain.Foods;
 
 namespace HomeChef.Application.Features.Foods;
@@ -238,6 +239,54 @@ public sealed class FoodService : IFoodService
         return ToDto(updated ?? food);
     }
 
+    public async Task<FoodItemDto> SetFoodImageAsync(
+        Guid userId,
+        Guid foodId,
+        ImageUploadResult image,
+        CancellationToken cancellationToken = default)
+    {
+        var food = await GetOwnedFoodAsync(userId, foodId, cancellationToken);
+
+        food.ImageUrl = image.Url;
+        food.ImageThumbnailUrl = image.ThumbnailUrl;
+        food.UpdatedAtUtc = DateTime.UtcNow;
+
+        await _foodRepository.UpdateAsync(food, cancellationToken);
+
+        var updated = await _foodRepository.GetByIdAsync(food.Id, cancellationToken);
+        return ToDto(updated ?? food);
+    }
+
+    public async Task<FoodItemDto> ClearFoodImageAsync(Guid userId, Guid foodId, CancellationToken cancellationToken = default)
+    {
+        var food = await GetOwnedFoodAsync(userId, foodId, cancellationToken);
+
+        food.ImageUrl = null;
+        food.ImageThumbnailUrl = null;
+        food.UpdatedAtUtc = DateTime.UtcNow;
+
+        await _foodRepository.UpdateAsync(food, cancellationToken);
+
+        var updated = await _foodRepository.GetByIdAsync(food.Id, cancellationToken);
+        return ToDto(updated ?? food);
+    }
+
+    private async Task<FoodItem> GetOwnedFoodAsync(Guid userId, Guid foodId, CancellationToken cancellationToken)
+    {
+        var chef = await _chefProfileRepository.GetByUserIdAsync(userId, cancellationToken)
+            ?? throw new BusinessException(ErrorCodes.ChefProfileNotFound, "Chef profile was not found.");
+
+        var food = await _foodRepository.GetByIdAsync(foodId, cancellationToken)
+            ?? throw new BusinessException(ErrorCodes.FoodItemNotFound, "Food item was not found.");
+
+        if (food.ChefProfileId != chef.Id)
+        {
+            throw new BusinessException(ErrorCodes.FoodItemForbidden, "You are not authorized to modify this food item.");
+        }
+
+        return food;
+    }
+
     public static FoodListItemDto ToListItem(FoodItem food, double? distanceKm = null)
     {
         return new FoodListItemDto
@@ -257,6 +306,7 @@ public sealed class FoodService : IFoodService
             Currency = food.Currency,
             IsAvailable = food.IsAvailable,
             ImageUrl = food.ImageUrl,
+            ImageThumbnailUrl = food.ImageThumbnailUrl,
             PreparationTimeMinutes = food.PreparationTimeMinutes,
         };
     }
@@ -282,6 +332,7 @@ public sealed class FoodService : IFoodService
             Currency = food.Currency,
             IsAvailable = food.IsAvailable,
             ImageUrl = food.ImageUrl,
+            ImageThumbnailUrl = food.ImageThumbnailUrl,
             PreparationTimeMinutes = food.PreparationTimeMinutes,
             CreatedAtUtc = food.CreatedAtUtc,
             UpdatedAtUtc = food.UpdatedAtUtc,

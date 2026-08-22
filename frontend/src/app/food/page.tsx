@@ -8,6 +8,7 @@ import {
   type FoodListItem,
   type FoodCategory,
 } from "@/lib/foods";
+import { resolveImageUrl } from "@/lib/images";
 
 export default function FoodDiscoveryPage() {
   const [foods, setFoods] = useState<FoodListItem[]>([]);
@@ -125,6 +126,14 @@ export default function FoodDiscoveryPage() {
               className="flex flex-col justify-between rounded-xl border border-gray-200 bg-white p-6 shadow-xs hover:border-gray-300 transition"
             >
               <div>
+                {resolveImageUrl(food.imageThumbnailUrl ?? food.imageUrl) && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={resolveImageUrl(food.imageThumbnailUrl ?? food.imageUrl) ?? ""}
+                    alt={food.name}
+                    className="mb-3 h-36 w-full rounded-lg border border-gray-100 object-cover"
+                  />
+                )}
                 <div className="flex items-start justify-between gap-2">
                   <span className="inline-block rounded-md bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
                     {food.categoryName ?? "Dish"}

@@ -2,6 +2,7 @@ using System.Security.Claims;
 using HomeChef.Api.Common;
 using HomeChef.Application.Features.Foods;
 using HomeChef.Application.Features.Foods.Contracts;
+using HomeChef.Application.Features.Images;
 using HomeChef.Domain.Constants;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -13,10 +14,12 @@ namespace HomeChef.Api.Controllers;
 public sealed class ChefFoodsController : ControllerBase
 {
     private readonly IFoodService _foodService;
+    private readonly IImageService _imageService;
 
-    public ChefFoodsController(IFoodService foodService)
+    public ChefFoodsController(IFoodService foodService, IImageService imageService)
     {
         _foodService = foodService;
+        _imageService = imageService;
     }
 
     /// <summary>Lists public food/menu items offered by a specific chef.</summary>
@@ -117,6 +120,41 @@ public sealed class ChefFoodsController : ControllerBase
     {
         var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
         var food = await _foodService.SetFoodAvailabilityAsync(userId, id, request.IsAvailable, cancellationToken);
+
+        return Ok(new ApiResponse<FoodItemDto>(food));
+    }
+
+    /// <summary>Uploads and sets the image of a food item owned by the calling chef (multipart/form-data, field "file").</summary>
+    [HttpPost("me/foods/{id:guid}/image")]
+    [Authorize(Policy = Policies.RequireChef)]
+    [ProducesResponseType(typeof(ApiResponse<FoodItemDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> UploadImage(
+        Guid id,
+        IFormFile file,
+        CancellationToken cancellationToken)
+    {
+        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+        await using var stream = file.OpenReadStream();
+        var image = await _imageService.UploadAsync(stream, file.Length, cancellationToken);
+        var food = await _foodService.SetFoodImageAsync(userId, id, image, cancellationToken);
+
+        return Ok(new ApiResponse<FoodItemDto>(food));
+    }
+
+    /// <summary>Removes the image of a food item owned by the calling chef.</summary>
+    [HttpDelete("me/foods/{id:guid}/image")]
+    [Authorize(Policy = Policies.RequireChef)]
+    [ProducesResponseType(typeof(ApiResponse<FoodItemDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DeleteImage(Guid id, CancellationToken cancellationToken)
+    {
+        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var food = await _foodService.ClearFoodImageAsync(userId, id, cancellationToken);
 
         return Ok(new ApiResponse<FoodItemDto>(food));
     }

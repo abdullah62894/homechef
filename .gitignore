@@ -37,3 +37,6 @@ appsettings.Production.json
 Thumbs.db
 .idea/
 *.swp
+# ===== Local image uploads (Stage 8) =====
+uploads/
+.zcode/

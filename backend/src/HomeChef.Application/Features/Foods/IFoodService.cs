@@ -1,5 +1,6 @@
 using HomeChef.Application.Common;
 using HomeChef.Application.Features.Foods.Contracts;
+using HomeChef.Application.Features.Images.Contracts;
 
 namespace HomeChef.Application.Features.Foods;
 
@@ -46,4 +47,14 @@ public interface IFoodService
         Guid foodId,
         bool isAvailable,
         CancellationToken cancellationToken = default);
+
+    /// <summary>Sets the image of a food item owned by the calling chef.</summary>
+    Task<FoodItemDto> SetFoodImageAsync(
+        Guid userId,
+        Guid foodId,
+        ImageUploadResult image,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>Removes the image of a food item owned by the calling chef.</summary>
+    Task<FoodItemDto> ClearFoodImageAsync(Guid userId, Guid foodId, CancellationToken cancellationToken = default);
 }

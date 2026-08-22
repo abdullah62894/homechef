@@ -4,6 +4,7 @@ using System.Text.Json.Serialization;
 using HomeChef.Api.Common;
 using HomeChef.Api.Middleware;
 using HomeChef.Application;
+using HomeChef.Application.Features.Images;
 using HomeChef.Application.Security;
 using HomeChef.Domain.Constants;
 using HomeChef.Infrastructure;
@@ -12,6 +13,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 
 // Containers have strict inotify limits (e.g. Render free tier); disable
@@ -146,6 +148,16 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors("Frontend");
+
+// Serve optimized images from the local storage directory (Stage 8).
+var imagesOptions = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<ImagesOptions>>().Value;
+var imageRoot = Path.GetFullPath(imagesOptions.StoragePath, app.Environment.ContentRootPath);
+Directory.CreateDirectory(imageRoot);
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(imageRoot),
+    RequestPath = imagesOptions.RequestPath,
+});
 
 app.UseAuthentication();
 app.UseAuthorization();

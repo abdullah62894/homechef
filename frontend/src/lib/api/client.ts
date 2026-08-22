@@ -1,4 +1,5 @@
 import { toApiError } from "./error";
+import { API_BASE_URL } from "./config";
 
 export interface RequestOptions {
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
@@ -24,8 +25,7 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
     ...headers,
   };
 
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5050";
-
+  const baseUrl = API_BASE_URL;
   const response = await fetch(`${baseUrl}${path}`, {
     method,
     headers: requestHeaders,
@@ -40,6 +40,32 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
 
   if (response.status === 204) {
     return undefined as T;
+  }
+
+  return (await response.json()) as T;
+}
+
+/**
+ * Upload wrapper for multipart/form-data requests. The browser sets the
+ * Content-Type (including the multipart boundary), so it must not be forced.
+ */
+export async function apiUpload<T>(
+  path: string,
+  file: File,
+  fieldName = "file"
+): Promise<T> {
+  const formData = new FormData();
+  formData.append(fieldName, file);
+
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    method: "POST",
+    headers: { Accept: "application/json" },
+    credentials: "include",
+    body: formData,
+  });
+
+  if (!response.ok) {
+    throw await toApiError(response);
   }
 
   return (await response.json()) as T;

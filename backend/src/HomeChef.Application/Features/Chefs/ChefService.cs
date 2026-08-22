@@ -2,6 +2,7 @@ using HomeChef.Application.Common;
 using HomeChef.Application.Common.Errors;
 using HomeChef.Application.Common.Exceptions;
 using HomeChef.Application.Features.Chefs.Contracts;
+using HomeChef.Application.Features.Images.Contracts;
 using HomeChef.Domain.Chefs;
 
 namespace HomeChef.Application.Features.Chefs;
@@ -110,6 +111,37 @@ public sealed class ChefService : IChefService
         return ToDto(profile);
     }
 
+    public async Task<ChefProfileDto> SetMyPhotoAsync(
+        Guid userId,
+        ImageUploadResult image,
+        CancellationToken cancellationToken = default)
+    {
+        var profile = await _repository.GetByUserIdAsync(userId, cancellationToken)
+            ?? throw new BusinessException(ErrorCodes.ChefProfileNotFound, "Chef profile was not found.");
+
+        profile.PhotoUrl = image.Url;
+        profile.PhotoThumbnailUrl = image.ThumbnailUrl;
+        profile.UpdatedAtUtc = DateTime.UtcNow;
+
+        await _repository.UpdateAsync(profile, cancellationToken);
+
+        return ToDto(profile);
+    }
+
+    public async Task<ChefProfileDto> ClearMyPhotoAsync(Guid userId, CancellationToken cancellationToken = default)
+    {
+        var profile = await _repository.GetByUserIdAsync(userId, cancellationToken)
+            ?? throw new BusinessException(ErrorCodes.ChefProfileNotFound, "Chef profile was not found.");
+
+        profile.PhotoUrl = null;
+        profile.PhotoThumbnailUrl = null;
+        profile.UpdatedAtUtc = DateTime.UtcNow;
+
+        await _repository.UpdateAsync(profile, cancellationToken);
+
+        return ToDto(profile);
+    }
+
     private static string[] NormalizeCuisines(string[]? cuisines)
     {
         return (cuisines ?? [])
@@ -137,6 +169,7 @@ public sealed class ChefService : IChefService
             DistanceKm = distanceKm,
             Cuisines = profile.Cuisines,
             PhotoUrl = profile.PhotoUrl,
+            PhotoThumbnailUrl = profile.PhotoThumbnailUrl,
         };
     }
 
@@ -156,6 +189,7 @@ public sealed class ChefService : IChefService
             DistanceKm = distanceKm,
             Cuisines = profile.Cuisines,
             PhotoUrl = profile.PhotoUrl,
+            PhotoThumbnailUrl = profile.PhotoThumbnailUrl,
             CreatedAtUtc = profile.CreatedAtUtc,
             UpdatedAtUtc = profile.UpdatedAtUtc,
         };

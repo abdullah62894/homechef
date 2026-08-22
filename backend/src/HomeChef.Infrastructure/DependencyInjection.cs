@@ -1,11 +1,13 @@
 using HomeChef.Application.Features.Chefs;
 using HomeChef.Application.Features.Favorites;
 using HomeChef.Application.Features.Foods;
+using HomeChef.Application.Features.Images;
 using HomeChef.Application.Features.Messages;
 using HomeChef.Application.Features.Reviews;
 using HomeChef.Domain.Identity;
 using HomeChef.Infrastructure.Data;
 using HomeChef.Infrastructure.Repositories;
+using HomeChef.Infrastructure.Storage;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -53,6 +55,7 @@ public static class DependencyInjection
         services.AddScoped<IReviewRepository, ReviewRepository>();
         services.AddScoped<IFavoriteRepository, FavoriteRepository>();
         services.AddScoped<IMessageRepository, ChefMessageRepository>();
+        services.AddSingleton<IImageStorage, LocalImageStorage>();
 
         return services;
     }

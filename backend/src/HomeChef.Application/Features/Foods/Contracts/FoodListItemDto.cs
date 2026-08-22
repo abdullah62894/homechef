@@ -32,5 +32,7 @@ public sealed record FoodListItemDto
 
     public string? ImageUrl { get; init; }
 
+    public string? ImageThumbnailUrl { get; init; }
+
     public int? PreparationTimeMinutes { get; init; }
 }

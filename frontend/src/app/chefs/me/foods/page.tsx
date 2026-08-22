@@ -14,6 +14,12 @@ import {
   type FoodCategory,
   type FoodItemInput,
 } from "@/lib/foods";
+import {
+  uploadFoodImage,
+  clearFoodImage,
+  resolveImageUrl,
+  validateImageFile,
+} from "@/lib/images";
 import { ApiError } from "@/lib/api";
 
 const initialForm: {
@@ -45,6 +51,8 @@ export default function ChefManageFoodsPage() {
   const [editingFoodId, setEditingFoodId] = useState<string | null>(null);
   const [formData, setFormData] = useState(initialForm);
   const [submitting, setSubmitting] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [removeImage, setRemoveImage] = useState(false);
 
   const loadData = useCallback(async () => {
     const [foodsPage, cats] = await Promise.all([listMyFoods(1, 100), listFoodCategories()]);
@@ -84,6 +92,8 @@ export default function ChefManageFoodsPage() {
   const handleOpenAdd = () => {
     setEditingFoodId(null);
     setFormData(initialForm);
+    setImageFile(null);
+    setRemoveImage(false);
     setError(null);
     setSuccess(null);
     setIsFormOpen(true);
@@ -99,6 +109,8 @@ export default function ChefManageFoodsPage() {
       preparationTimeMinutes: food.preparationTimeMinutes?.toString() ?? "",
       isAvailable: food.isAvailable,
     });
+    setImageFile(null);
+    setRemoveImage(false);
     setError(null);
     setSuccess(null);
     setIsFormOpen(true);
@@ -108,7 +120,24 @@ export default function ChefManageFoodsPage() {
     setIsFormOpen(false);
     setEditingFoodId(null);
     setFormData(initialForm);
+    setImageFile(null);
+    setRemoveImage(false);
   };
+
+  function handleImageChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+
+    const validationError = validateImageFile(file);
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+
+    setImageFile(file);
+    setRemoveImage(false);
+  }
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -137,13 +166,22 @@ export default function ChefManageFoodsPage() {
     };
 
     try {
+      let foodId = editingFoodId;
       if (editingFoodId) {
         await updateFoodItem(editingFoodId, input);
         setSuccess("Dish updated successfully!");
       } else {
-        await createFoodItem(input);
+        const created = await createFoodItem(input);
+        foodId = created.id;
         setSuccess("Dish added successfully to your menu!");
       }
+
+      if (foodId && imageFile) {
+        await uploadFoodImage(foodId, imageFile);
+      } else if (foodId && removeImage) {
+        await clearFoodImage(foodId);
+      }
+
       handleCloseForm();
       const result = await loadData();
       setFoods(result.foods);
@@ -272,9 +310,21 @@ export default function ChefManageFoodsPage() {
                 {foods.map((food) => (
                   <tr key={food.id} className="hover:bg-gray-50/70 transition">
                     <td className="px-6 py-4">
-                      <div className="font-semibold text-gray-900">{food.name}</div>
-                      <div className="text-xs text-gray-500 line-clamp-1 mt-0.5">
-                        {food.description}
+                      <div className="flex items-center gap-3">
+                        {resolveImageUrl(food.imageThumbnailUrl ?? food.imageUrl) && (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={resolveImageUrl(food.imageThumbnailUrl ?? food.imageUrl) ?? ""}
+                            alt={food.name}
+                            className="h-12 w-12 rounded-lg border border-gray-200 object-cover"
+                          />
+                        )}
+                        <div>
+                          <div className="font-semibold text-gray-900">{food.name}</div>
+                          <div className="text-xs text-gray-500 line-clamp-1 mt-0.5">
+                            {food.description}
+                          </div>
+                        </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 text-gray-600">
@@ -426,6 +476,64 @@ export default function ChefManageFoodsPage() {
                   placeholder="Describe your dish, key ingredients, spice levels, serving size..."
                   className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                 />
+              </div>
+
+              <div>
+                <label htmlFor="foodImage" className="block text-xs font-semibold text-gray-700 uppercase">
+                  Dish Photo (optional)
+                </label>
+                <div className="mt-1 flex items-center gap-3">
+                  {imageFile ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={URL.createObjectURL(imageFile)}
+                      alt="Selected dish preview"
+                      className="h-16 w-16 rounded-lg border border-gray-200 object-cover"
+                    />
+                  ) : editingFoodId &&
+                    foods.find((f) => f.id === editingFoodId)?.imageThumbnailUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={
+                        resolveImageUrl(
+                          foods.find((f) => f.id === editingFoodId)?.imageThumbnailUrl
+                        ) ?? ""
+                      }
+                      alt="Current dish photo"
+                      className="h-16 w-16 rounded-lg border border-gray-200 object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-16 w-16 items-center justify-center rounded-lg border border-dashed border-gray-300 bg-gray-50 text-xl">
+                      🍽️
+                    </div>
+                  )}
+                  <div className="flex flex-col gap-1">
+                    <label className="inline-flex w-fit cursor-pointer rounded-lg bg-gray-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-gray-800">
+                      {imageFile ? "Change photo" : "Upload photo"}
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        className="hidden"
+                        onChange={handleImageChange}
+                      />
+                    </label>
+                    {(imageFile || removeImage) && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setImageFile(null);
+                          setRemoveImage(true);
+                        }}
+                        className="w-fit text-xs font-medium text-red-600 hover:text-red-800 underline"
+                      >
+                        Remove photo
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <p className="mt-1 text-xs text-gray-500">
+                  JPEG, PNG or WebP up to 5 MB. Resized and converted to WebP automatically.
+                </p>
               </div>
 
               <div className="flex items-center gap-2 pt-2">

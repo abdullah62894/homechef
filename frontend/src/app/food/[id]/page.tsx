@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { getFood, type FoodItem } from "@/lib/foods";
+import { resolveImageUrl } from "@/lib/images";
 import {
   addFoodFavorite,
   getUserFavoriteIds,
@@ -132,6 +133,15 @@ export default function FoodDetailPage() {
             <h1 className="mt-4 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
               {food.name}
             </h1>
+
+            {resolveImageUrl(food.imageUrl) && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={resolveImageUrl(food.imageUrl) ?? ""}
+                alt={food.name}
+                className="mt-4 aspect-video w-full rounded-xl border border-gray-100 object-cover"
+              />
+            )}
 
             <div className="mt-4 flex items-baseline gap-2">
               <span className="text-3xl font-extrabold text-gray-900">

@@ -1,4 +1,4 @@
-export { apiFetch } from "./client";
+export { apiFetch, apiUpload } from "./client";
 export type { RequestOptions } from "./client";
 export { ApiError, toApiError } from "./error";
 export type { ApiErrorBody } from "./error";

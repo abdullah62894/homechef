@@ -21,5 +21,10 @@ public class HomeChefApiFactory : WebApplicationFactory<Program>
                                ?? TestConnectionString;
 
         builder.UseSetting("ConnectionStrings:Default", connectionString);
+        builder.UseSetting("Images:StoragePath", StorageRoot);
     }
+
+    /// <summary>Temp directory into which image uploads are written during tests.</summary>
+    public string StorageRoot { get; } =
+        Path.Combine(Path.GetTempPath(), "homechef-tests", Guid.NewGuid().ToString("N"));
 }

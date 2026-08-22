@@ -49,6 +49,9 @@ public sealed class ChefProfileConfiguration : IEntityTypeConfiguration<ChefProf
         builder.Property(p => p.PhotoUrl)
             .HasMaxLength(500);
 
+        builder.Property(p => p.PhotoThumbnailUrl)
+            .HasMaxLength(500);
+
         builder.Property(p => p.CreatedAtUtc)
             .HasColumnType("timestamptz")
             .IsRequired();

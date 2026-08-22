@@ -27,8 +27,11 @@ public class ChefProfile
     /// <summary>Normalized cuisine tags (e.g. "Pakistani", "Bakery").</summary>
     public string[] Cuisines { get; set; } = [];
 
-    /// <summary>Reserved for the image storage stage.</summary>
+    /// <summary>Optimized WebP photo served from image storage.</summary>
     public string? PhotoUrl { get; set; }
+
+    /// <summary>Small WebP variant of <see cref="PhotoUrl"/> for lists.</summary>
+    public string? PhotoThumbnailUrl { get; set; }
 
     public DateTime CreatedAtUtc { get; set; }
 

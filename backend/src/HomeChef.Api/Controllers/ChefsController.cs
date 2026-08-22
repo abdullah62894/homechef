@@ -2,6 +2,7 @@ using System.Security.Claims;
 using HomeChef.Api.Common;
 using HomeChef.Application.Features.Chefs;
 using HomeChef.Application.Features.Chefs.Contracts;
+using HomeChef.Application.Features.Images;
 using HomeChef.Domain.Constants;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -13,10 +14,12 @@ namespace HomeChef.Api.Controllers;
 public sealed class ChefsController : ControllerBase
 {
     private readonly IChefService _chefService;
+    private readonly IImageService _imageService;
 
-    public ChefsController(IChefService chefService)
+    public ChefsController(IChefService chefService, IImageService imageService)
     {
         _chefService = chefService;
+        _imageService = imageService;
     }
 
     /// <summary>Lists public chef profiles (paginated, filterable).</summary>
@@ -103,5 +106,35 @@ public sealed class ChefsController : ControllerBase
         var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
         return Ok(new ApiResponse<ChefProfileDto>(await _chefService.UpdateAsync(userId, request, cancellationToken)));
+    }
+
+    /// <summary>Uploads and sets the calling chef's profile photo (multipart/form-data, field "file").</summary>
+    [HttpPost("me/photo")]
+    [Authorize(Policy = Policies.RequireChef)]
+    [ProducesResponseType(typeof(ApiResponse<ChefProfileDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> UploadPhoto(
+        IFormFile file,
+        CancellationToken cancellationToken)
+    {
+        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+        await using var stream = file.OpenReadStream();
+        var image = await _imageService.UploadAsync(stream, file.Length, cancellationToken);
+        var profile = await _chefService.SetMyPhotoAsync(userId, image, cancellationToken);
+
+        return Ok(new ApiResponse<ChefProfileDto>(profile));
+    }
+
+    /// <summary>Removes the calling chef's profile photo.</summary>
+    [HttpDelete("me/photo")]
+    [Authorize(Policy = Policies.RequireChef)]
+    [ProducesResponseType(typeof(ApiResponse<ChefProfileDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DeletePhoto(CancellationToken cancellationToken)
+    {
+        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        return Ok(new ApiResponse<ChefProfileDto>(await _chefService.ClearMyPhotoAsync(userId, cancellationToken)));
     }
 }

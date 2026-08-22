@@ -36,6 +36,8 @@ public sealed record FoodItemDto
 
     public string? ImageUrl { get; init; }
 
+    public string? ImageThumbnailUrl { get; init; }
+
     public int? PreparationTimeMinutes { get; init; }
 
     public required DateTime CreatedAtUtc { get; init; }

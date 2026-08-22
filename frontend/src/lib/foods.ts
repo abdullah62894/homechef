@@ -24,6 +24,7 @@ export interface FoodListItem {
   currency: string;
   isAvailable: boolean;
   imageUrl: string | null;
+  imageThumbnailUrl: string | null;
   preparationTimeMinutes: number | null;
 }
 

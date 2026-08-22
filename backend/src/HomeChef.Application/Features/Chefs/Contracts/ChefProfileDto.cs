@@ -23,6 +23,8 @@ public sealed class ChefListItemDto
     public string[] Cuisines { get; set; } = [];
 
     public string? PhotoUrl { get; set; }
+
+    public string? PhotoThumbnailUrl { get; set; }
 }
 
 public sealed class ChefProfileDto
@@ -50,6 +52,8 @@ public sealed class ChefProfileDto
     public string[] Cuisines { get; set; } = [];
 
     public string? PhotoUrl { get; set; }
+
+    public string? PhotoThumbnailUrl { get; set; }
 
     public DateTime CreatedAtUtc { get; set; }
 

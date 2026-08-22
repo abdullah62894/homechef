@@ -27,8 +27,11 @@ public class FoodItem
 
     public bool IsAvailable { get; set; } = true;
 
-    /// <summary>Reserved for image storage stage.</summary>
+    /// <summary>Optimized WebP image served from image storage.</summary>
     public string? ImageUrl { get; set; }
+
+    /// <summary>Small WebP variant of <see cref="ImageUrl"/> for lists.</summary>
+    public string? ImageThumbnailUrl { get; set; }
 
     public int? PreparationTimeMinutes { get; set; }
 

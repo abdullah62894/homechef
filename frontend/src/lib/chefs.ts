@@ -12,6 +12,7 @@ export interface ChefListItem {
   distanceKm: number | null;
   cuisines: string[];
   photoUrl: string | null;
+  photoThumbnailUrl: string | null;
 }
 
 export interface ChefProfile extends ChefListItem {

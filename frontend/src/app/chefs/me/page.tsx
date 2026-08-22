@@ -9,6 +9,7 @@ import {
   updateChefProfile,
   type ChefProfile,
 } from "@/lib/chefs";
+import { uploadChefPhoto, clearChefPhoto, resolveImageUrl, validateImageFile } from "@/lib/images";
 import { ApiError } from "@/lib/api";
 
 const emptyForm = { displayName: "", bio: "", city: "", area: "", address: "", latitude: "", longitude: "", cuisines: "" };
@@ -21,6 +22,9 @@ export default function ChefProfileMePage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+
+  const [photoBusy, setPhotoBusy] = useState(false);
+  const [photoError, setPhotoError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -60,6 +64,44 @@ export default function ChefProfileMePage() {
 
   function update<K extends keyof typeof form>(key: K, value: string) {
     setForm((current) => ({ ...current, [key]: value }));
+  }
+
+  async function handlePhotoChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+
+    setPhotoError(null);
+    const validationError = validateImageFile(file);
+    if (validationError) {
+      setPhotoError(validationError);
+      return;
+    }
+
+    setPhotoBusy(true);
+    try {
+      await uploadChefPhoto(file);
+      const refreshed = await getMyChefProfile();
+      setExisting(refreshed);
+    } catch (err) {
+      setPhotoError(err instanceof ApiError ? err.message : "Unable to upload photo.");
+    } finally {
+      setPhotoBusy(false);
+    }
+  }
+
+  async function handleRemovePhoto() {
+    setPhotoError(null);
+    setPhotoBusy(true);
+    try {
+      await clearChefPhoto();
+      const refreshed = await getMyChefProfile();
+      setExisting(refreshed);
+    } catch (err) {
+      setPhotoError(err instanceof ApiError ? err.message : "Unable to remove photo.");
+    } finally {
+      setPhotoBusy(false);
+    }
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -107,6 +149,58 @@ export default function ChefProfileMePage() {
         {existing ? "Edit your chef profile" : "Create your chef profile"}
       </h1>
       <p className="mt-2 text-gray-600">Tell hungry customers who you are and what you cook.</p>
+
+      {existing && (
+        <div className="mt-6 rounded-xl border border-gray-200 bg-white p-4">
+          <div className="flex items-start gap-4">
+            {resolveImageUrl(existing.photoThumbnailUrl ?? existing.photoUrl) ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={resolveImageUrl(existing.photoThumbnailUrl ?? existing.photoUrl) ?? ""}
+                alt={existing.displayName}
+                className="h-20 w-20 rounded-full border border-gray-200 object-cover"
+              />
+            ) : (
+              <div className="flex h-20 w-20 items-center justify-center rounded-full border border-dashed border-gray-300 bg-gray-50 text-2xl">
+                👩‍🍳
+              </div>
+            )}
+            <div className="flex-1">
+              <div className="text-sm font-semibold text-gray-900">Profile photo</div>
+              <div className="text-xs text-gray-600">
+                JPEG, PNG or WebP up to 5 MB. Optimized to WebP automatically.
+              </div>
+              <div className="mt-2 flex gap-2">
+                <label
+                  className={`inline-flex cursor-pointer items-center rounded-lg bg-gray-900 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-gray-800 ${
+                    photoBusy ? "pointer-events-none opacity-50" : ""
+                  }`}
+                >
+                  {photoBusy ? "Uploading…" : existing.photoUrl ? "Change photo" : "Upload photo"}
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    className="hidden"
+                    onChange={handlePhotoChange}
+                    disabled={photoBusy}
+                  />
+                </label>
+                {existing.photoUrl && (
+                  <button
+                    type="button"
+                    onClick={handleRemovePhoto}
+                    disabled={photoBusy}
+                    className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
+              {photoError && <div className="mt-2 text-xs text-red-600">{photoError}</div>}
+            </div>
+          </div>
+        </div>
+      )}
 
       {existing && (
         <div className="mt-6 rounded-xl border border-gray-200 bg-gray-50 p-4 flex items-center justify-between">

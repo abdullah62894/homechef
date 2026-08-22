@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { listChefs, type ChefListItem } from "@/lib/chefs";
+import { resolveImageUrl } from "@/lib/images";
 import { ApiError } from "@/lib/api";
 
 const PAGE_SIZE = 12;
@@ -62,7 +63,15 @@ export default function ChefsPage() {
                 href={`/chefs/${chef.id}`}
                 className="rounded-xl border border-gray-200 p-6 transition hover:border-gray-300 hover:shadow-sm"
               >
-                <h2 className="text-lg font-semibold">{chef.displayName}</h2>
+                {resolveImageUrl(chef.photoThumbnailUrl ?? chef.photoUrl) && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={resolveImageUrl(chef.photoThumbnailUrl ?? chef.photoUrl) ?? ""}
+                    alt={chef.displayName}
+                    className="h-14 w-14 rounded-full border border-gray-200 object-cover"
+                  />
+                )}
+                <h2 className={`text-lg font-semibold ${chef.photoUrl ? "mt-3" : ""}`}>{chef.displayName}</h2>
                 <p className="mt-1 text-sm text-gray-500">
                   {chef.city}
                   {chef.area ? `, ${chef.area}` : ""}

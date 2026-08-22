@@ -47,6 +47,9 @@ public sealed class FoodItemConfiguration : IEntityTypeConfiguration<FoodItem>
         builder.Property(f => f.ImageUrl)
             .HasMaxLength(500);
 
+        builder.Property(f => f.ImageThumbnailUrl)
+            .HasMaxLength(500);
+
         builder.Property(f => f.PreparationTimeMinutes);
 
         builder.Property(f => f.CreatedAtUtc)

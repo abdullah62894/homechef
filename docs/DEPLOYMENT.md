@@ -18,6 +18,18 @@ PostgreSQL            (managed)
 Object storage        (Cloudflare R2 / AWS S3 / Azure Blob)  — later stage
 ```
 
+## Image storage caveat (Stage 8)
+
+Uploaded images are currently written to the container's local filesystem
+(`Images__StoragePath`, default `uploads/`) and served by the API under
+`/uploads/...`. The Render container filesystem is **ephemeral** — images
+uploaded on a free-tier deployment are lost on every restart/redeploy. This is
+acceptable for development; before production, implement an
+`IImageStorage` provider for object storage (Cloudflare R2 / S3 / Azure Blob).
+Only the URL columns in PostgreSQL (`PhotoUrl`, `PhotoThumbnailUrl`,
+`ImageUrl`, `ImageThumbnailUrl`) need to keep working — they already store
+whatever URL the provider returns.
+
 ## MVP deployment (Render + Vercel)
 
 - **Frontend**: Vercel (Next.js App Router).

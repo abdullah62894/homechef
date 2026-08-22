@@ -175,6 +175,8 @@ Errors: `401` (missing or invalid credentials), `404 USER_NOT_FOUND`.
 | GET | `/api/chefs/{id}` | Public chef profile (anonymous) |
 | GET | `/api/chefs/me` | Calling chef's own profile (Chef role) |
 | POST | `/api/chefs/me` | Create calling chef's profile (Chef role) |
+| POST | `/api/chefs/me/photo` | Upload profile photo — multipart `file` (Chef role, Stage 8) |
+| DELETE | `/api/chefs/me/photo` | Remove profile photo (Chef role, Stage 8) |
 | PUT | `/api/chefs/me` | Update calling chef's profile (Chef role) |
 
 #### GET `/api/chefs`
@@ -198,7 +200,8 @@ Public, paginated list ordered by display name.
       "city": "Karachi",
       "area": "Clifton",
       "cuisines": ["Bakery", "Pakistani"],
-      "photoUrl": null
+      "photoUrl": null,
+      "photoThumbnailUrl": null
     }
   ],
   "meta": { "page": 1, "pageSize": 20, "total": 1, "hasMore": false }
@@ -263,6 +266,8 @@ Errors: `401` (not signed in), `403` (not a Chef), `400 VALIDATION_ERROR`,
 | PUT | `/api/chefs/me/foods/{id}` | Update food item (Chef role, verifies ownership) |
 | DELETE | `/api/chefs/me/foods/{id}` | Delete food item (Chef role, verifies ownership) |
 | PATCH | `/api/chefs/me/foods/{id}/availability` | Toggle availability status (Chef role, verifies ownership) |
+| POST | `/api/chefs/me/foods/{id}/image` | Upload dish image — multipart `file` (Chef role, verifies ownership, Stage 8) |
+| DELETE | `/api/chefs/me/foods/{id}/image` | Remove dish image (Chef role, verifies ownership, Stage 8) |
 
 #### GET `/api/foods`
 
@@ -290,6 +295,7 @@ Public, paginated query filter:
       "currency": "PKR",
       "isAvailable": true,
       "imageUrl": null,
+      "imageThumbnailUrl": null,
       "preparationTimeMinutes": 45
     }
   ],
@@ -353,7 +359,8 @@ Public query filter:
         "longitude": 67.0298,
         "distanceKm": 1.25,
         "cuisines": ["Pakistani"],
-        "photoUrl": null
+        "photoUrl": null,
+      "photoThumbnailUrl": null
       }
     ],
     "foods": [
@@ -373,6 +380,8 @@ Public query filter:
         "currency": "PKR",
         "isAvailable": true,
         "imageUrl": null,
+        "imageThumbnailUrl": null,
+      "imageThumbnailUrl": null,
         "preparationTimeMinutes": 45
       }
     ],
@@ -537,6 +546,38 @@ Errors: `CHEF_PROFILE_NOT_FOUND` (404), `SELF_MESSAGE_FORBIDDEN` (403 — a chef
 contact their own kitchen), `VALIDATION_ERROR` (400 — body 1–2000 chars).
 Marking a read requires owning the recipient chef profile; otherwise
 `MESSAGE_FORBIDDEN` (403).
+
+### Image storage and optimization (Stage 8)
+
+Chef profile photos and food item images are uploaded as `multipart/form-data`
+with a single `file` field (JPEG, PNG or WebP, max 5 MB). The server
+auto-orients, resizes to at most 1600px, re-encodes as WebP (quality ~80), and
+stores a 400px thumbnail next to the full image. Stored images are served
+anonymously from the API under `/uploads/...` (relative URLs are persisted in
+`photoUrl` / `photoThumbnailUrl` and `imageUrl` / `imageThumbnailUrl`).
+
+Upload endpoints return the updated entity; the client reads the new URL from
+the response (e.g. `data.photoUrl`, `data.imageUrl`).
+
+```text
+POST   /api/chefs/me/photo              # set the caller's profile photo (Chef role)
+DELETE /api/chefs/me/photo              # remove the profile photo (Chef role)
+POST   /api/chefs/me/foods/{id}/image   # set a dish image (Chef role, verifies ownership)
+DELETE /api/chefs/me/foods/{id}/image   # remove a dish image (Chef role, verifies ownership)
+```
+
+#### Error codes (images)
+
+| Code | Meaning |
+| ---- | ------- |
+| `IMAGE_TOO_LARGE` | Upload exceeds 5 MB |
+| `IMAGE_INVALID_TYPE` | Content is not a JPEG, PNG or WebP image |
+| `IMAGE_INVALID` | Upload could not be decoded |
+| `FOOD_ITEM_FORBIDDEN` | Caller does not own the food item (403) |
+
+Configuration (environment-prefixed `Images__`): `StoragePath` (default
+`uploads`), `RequestPath` (default `/uploads`), `MaxFileSizeBytes`,
+`MaxDimension`, `ThumbnailDimension`, `Quality`.
 
 ## Pagination
 

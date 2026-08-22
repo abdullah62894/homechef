@@ -1,5 +1,6 @@
 using HomeChef.Application.Common;
 using HomeChef.Application.Features.Chefs.Contracts;
+using HomeChef.Application.Features.Images.Contracts;
 
 namespace HomeChef.Application.Features.Chefs;
 
@@ -29,4 +30,13 @@ public interface IChefService
         Guid userId,
         UpdateChefProfileRequest request,
         CancellationToken cancellationToken = default);
+
+    /// <summary>Sets the calling chef's profile photo from an optimized upload.</summary>
+    Task<ChefProfileDto> SetMyPhotoAsync(
+        Guid userId,
+        ImageUploadResult image,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>Removes the calling chef's profile photo.</summary>
+    Task<ChefProfileDto> ClearMyPhotoAsync(Guid userId, CancellationToken cancellationToken = default);
 }

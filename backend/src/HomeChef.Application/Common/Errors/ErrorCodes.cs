@@ -25,4 +25,7 @@ public static class ErrorCodes
     public const string MessageForbidden = "MESSAGE_FORBIDDEN";
     public const string SelfMessageForbidden = "SELF_MESSAGE_FORBIDDEN";
     public const string ChefProfileMissing = "CHEF_PROFILE_MISSING";
+    public const string ImageTooLarge = "IMAGE_TOO_LARGE";
+    public const string ImageInvalidType = "IMAGE_INVALID_TYPE";
+    public const string ImageInvalid = "IMAGE_INVALID";
 }
