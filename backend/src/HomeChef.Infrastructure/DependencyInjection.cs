@@ -1,3 +1,4 @@
+using HomeChef.Application.Features.Admin;
 using HomeChef.Application.Features.Chefs;
 using HomeChef.Application.Features.Favorites;
 using HomeChef.Application.Features.Foods;
@@ -56,6 +57,7 @@ public static class DependencyInjection
         services.AddScoped<IFavoriteRepository, FavoriteRepository>();
         services.AddScoped<IMessageRepository, ChefMessageRepository>();
         services.AddSingleton<IImageStorage, LocalImageStorage>();
+        services.AddScoped<IAdminRepository, AdminRepository>();
 
         return services;
     }

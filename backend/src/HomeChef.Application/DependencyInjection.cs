@@ -1,3 +1,4 @@
+using HomeChef.Application.Features.Admin;
 using HomeChef.Application.Features.Auth;
 using HomeChef.Application.Features.Chefs;
 using HomeChef.Application.Features.Favorites;
@@ -28,6 +29,7 @@ public static class DependencyInjection
         services.AddScoped<IFavoriteService, FavoriteService>();
         services.AddScoped<IMessageService, MessageService>();
         services.AddScoped<IImageService, ImageService>();
+        services.AddScoped<IAdminService, AdminService>();
 
         return services;
     }

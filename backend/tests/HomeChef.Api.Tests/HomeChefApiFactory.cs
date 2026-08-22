@@ -22,6 +22,10 @@ public class HomeChefApiFactory : WebApplicationFactory<Program>
 
         builder.UseSetting("ConnectionStrings:Default", connectionString);
         builder.UseSetting("Images:StoragePath", StorageRoot);
+
+        // Boots an admin account via the DatabaseInitializer seed (Stage 9).
+        builder.UseSetting("Admin:SeedAdminEmail", "admin@homechef.test");
+        builder.UseSetting("Admin:SeedAdminPassword", "Admin123!");
     }
 
     /// <summary>Temp directory into which image uploads are written during tests.</summary>

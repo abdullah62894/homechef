@@ -9,6 +9,9 @@ import {
   type FoodCategory,
 } from "@/lib/foods";
 import { resolveImageUrl } from "@/lib/images";
+import { deleteAdminFood } from "@/lib/admin";
+import { fetchMe } from "@/lib/auth";
+import { ApiError } from "@/lib/api";
 
 export default function FoodDiscoveryPage() {
   const [foods, setFoods] = useState<FoodListItem[]>([]);
@@ -17,6 +20,23 @@ export default function FoodDiscoveryPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    fetchMe()
+      .then((me) => setIsAdmin(me.roles.includes("Admin")))
+      .catch(() => {});
+  }, []);
+
+  async function handleAdminDelete(food: FoodListItem) {
+    if (!window.confirm(`Delete dish "${food.name}"?`)) return;
+    try {
+      await deleteAdminFood(food.id);
+      setFoods((prev) => prev.filter((f) => f.id !== food.id));
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Unable to delete this dish.");
+    }
+  }
 
   useEffect(() => {
     listFoodCategories()
@@ -178,6 +198,18 @@ export default function FoodDiscoveryPage() {
                   View Details →
                 </Link>
               </div>
+
+              {isAdmin && (
+                <div className="mt-3 border-t border-gray-100 pt-3 text-right">
+                  <button
+                    type="button"
+                    onClick={() => handleAdminDelete(food)}
+                    className="text-xs font-medium text-red-600 hover:text-red-800 underline"
+                  >
+                    Remove (admin)
+                  </button>
+                </div>
+              )}
             </article>
           ))}
         </div>

@@ -34,6 +34,11 @@ services:
         sync: false
       - key: Cors__AllowedOrigins__0
         sync: false
+      # Stage 9: first admin account (created at startup when missing).
+      - key: Admin__SeedAdminEmail
+        sync: false
+      - key: Admin__SeedAdminPassword
+        sync: false
 
 databases:
   - name: homechef-db

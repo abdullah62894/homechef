@@ -142,6 +142,23 @@ export default function MePage() {
         </dl>
       </div>
 
+      {user.roles.includes("Admin") && (
+        <div className="mt-8 rounded-xl border border-gray-900/15 bg-gray-900 p-4 flex items-center justify-between">
+          <div>
+            <div className="text-sm font-semibold text-white">Admin console</div>
+            <div className="text-xs text-gray-300">
+              Moderate accounts, reviews and dishes.
+            </div>
+          </div>
+          <Link
+            href="/admin"
+            className="rounded-lg bg-white px-3 py-1.5 text-xs font-medium text-gray-900 hover:bg-gray-100 transition"
+          >
+            Open console →
+          </Link>
+        </div>
+      )}
+
       {user.roles.includes("Chef") && (
         <div className="mt-10">
           <div className="flex items-center gap-3">

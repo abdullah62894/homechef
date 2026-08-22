@@ -579,6 +579,43 @@ Configuration (environment-prefixed `Images__`): `StoragePath` (default
 `uploads`), `RequestPath` (default `/uploads`), `MaxFileSizeBytes`,
 `MaxDimension`, `ThumbnailDimension`, `Quality`.
 
+### Admin and moderation (Stage 9)
+
+All endpoints require the `Admin` role. Admin accounts are bootstrapped at
+startup: `Admin:SeedAdminEmail` + `Admin:SeedAdminPassword` create the first
+admin when missing, and `Admin:Emails` (string array) promote existing
+accounts to the Admin role.
+
+| Method | Path | Description |
+| ------ | ---- | ----------- |
+| GET | `/api/admin/users` | List accounts — `?search=&role=&page=&pageSize=` |
+| POST | `/api/admin/users/{id}/suspend` | Block sign-in (Identity lockout, far future) |
+| POST | `/api/admin/users/{id}/restore` | Lift a suspension |
+| GET | `/api/admin/reviews` | List all reviews newest first (paginated) |
+| DELETE | `/api/admin/reviews/{id}` | Remove a review (moderation) |
+| DELETE | `/api/admin/foods/{id}` | Remove a dish (favorites cascade) |
+| DELETE | `/api/admin/chefs/{chefProfileId}` | Remove a kitchen — dishes, reviews, messages and favorites cascade; the account is kept |
+
+```json
+// GET /api/admin/users — item shape
+{
+  "id": "c11a1f2e-93b0-4a44-8f7c-2f6f0d5b8e21",
+  "email": "amna@example.com",
+  "firstName": "Amna",
+  "lastName": "Khan",
+  "roles": ["Chef"],
+  "isSuspended": false,
+  "chefProfileId": "17994471-e812-4da7-ae46-441555e5f09a",
+  "createdAtUtc": "2026-08-01T10:00:00Z"
+}
+```
+
+Suspension guards: an admin cannot suspend themselves or another admin
+(`ADMIN_SELF_SUSPEND_FORBIDDEN` / `ADMIN_SUSPEND_ADMIN_FORBIDDEN`, 400).
+Suspended accounts get `LOCKED_OUT` (401) at login. Note: an already-issued
+JWT cookie stays valid until its expiry; suspensions take effect on the next
+sign-in.
+
 ## Pagination
 
 List endpoints use `page` / `pageSize` query parameters and return `meta` with `page`, `pageSize`, `total`, and `hasMore`.

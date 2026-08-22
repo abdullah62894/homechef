@@ -15,7 +15,7 @@ ahead of their stage unless required as architectural foundations.
 | 6 | Favorites — save favorite chefs and dishes, quick toggles, user favorites page | Done |
 | 7 | Contact chef — customers message chefs, chef inbox with unread counts and read receipts | Done |
 | 8 | Image storage and optimization — chef photos and dish images, WebP re-encode, thumbnails | Done |
-| 9 | Admin and moderation | Planned |
+| 9 | Admin and moderation — admin seeding, account suspension, review/dish/kitchen moderation | Done |
 | 10 | Reporting and abuse prevention | Planned |
 | 11 | Notifications | Planned |
 | 12 | Redis and performance optimization | Planned |

@@ -25,4 +25,6 @@ public interface IChefProfileRepository
     Task AddAsync(ChefProfile profile, CancellationToken cancellationToken = default);
 
     Task UpdateAsync(ChefProfile profile, CancellationToken cancellationToken = default);
+
+    Task DeleteAsync(ChefProfile profile, CancellationToken cancellationToken = default);
 }

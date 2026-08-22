@@ -28,4 +28,6 @@ public static class ErrorCodes
     public const string ImageTooLarge = "IMAGE_TOO_LARGE";
     public const string ImageInvalidType = "IMAGE_INVALID_TYPE";
     public const string ImageInvalid = "IMAGE_INVALID";
+    public const string AdminSelfSuspendForbidden = "ADMIN_SELF_SUSPEND_FORBIDDEN";
+    public const string AdminSuspendAdminForbidden = "ADMIN_SUSPEND_ADMIN_FORBIDDEN";
 }

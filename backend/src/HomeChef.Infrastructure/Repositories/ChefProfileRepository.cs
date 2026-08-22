@@ -145,6 +145,12 @@ public sealed class ChefProfileRepository : IChefProfileRepository
         await _db.SaveChangesAsync(cancellationToken);
     }
 
+    public async Task DeleteAsync(ChefProfile profile, CancellationToken cancellationToken = default)
+    {
+        _db.ChefProfiles.Remove(profile);
+        await _db.SaveChangesAsync(cancellationToken);
+    }
+
     private static double CalculateDistanceKm(double lat1, double lon1, double lat2, double lon2)
     {
         var rlat1 = Math.PI * lat1 / 180.0;
