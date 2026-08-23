@@ -1,18 +1,21 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState, type FormEvent } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { registerUser, type SelfServiceRole } from "@/lib/auth";
 import { ApiError } from "@/lib/api";
 
-export default function RegisterPage() {
+function RegisterPageInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState<SelfServiceRole>("Customer");
+  const [role, setRole] = useState<SelfServiceRole>(
+    searchParams.get("role") === "Chef" ? "Chef" : "Customer"
+  );
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -138,5 +141,13 @@ export default function RegisterPage() {
         </Link>
       </p>
     </section>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={<section className="mx-auto max-w-md px-4 py-16 text-gray-600">Loading…</section>}>
+      <RegisterPageInner />
+    </Suspense>
   );
 }

@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { search, type SearchResult } from "@/lib/search";
 import { ApiError } from "@/lib/api";
+import { chefHref, foodHref } from "@/lib/slugs";
 
 const PAGE_SIZE = 12;
 
@@ -12,11 +14,12 @@ type LoadState =
   | { status: "error"; message: string }
   | { status: "ready"; result: SearchResult };
 
-export default function SearchPage() {
-  const [query, setQuery] = useState("");
-  const [debouncedQuery, setDebouncedQuery] = useState("");
-  
-  const [city, setCity] = useState("");
+function SearchPageInner() {
+  const searchParams = useSearchParams();
+  const [query, setQuery] = useState(searchParams.get("q") ?? "");
+  const [debouncedQuery, setDebouncedQuery] = useState(searchParams.get("q") ?? "");
+
+  const [city, setCity] = useState(searchParams.get("city") ?? "");
   const [area, setArea] = useState("");
   const [cuisine, setCuisine] = useState("");
   const [type, setType] = useState<'all' | 'chefs' | 'foods'>("all");
@@ -164,7 +167,7 @@ export default function SearchPage() {
                     {state.result.chefs.map((chef) => (
                       <Link
                         key={chef.id}
-                        href={`/chefs/${chef.id}`}
+                        href={chefHref(chef.id, chef.displayName)}
                         className="rounded-xl border border-gray-200 p-6 transition hover:border-gray-300 hover:shadow-sm"
                       >
                         <h3 className="text-lg font-semibold">{chef.displayName}</h3>
@@ -219,7 +222,7 @@ export default function SearchPage() {
                           </div>
 
                           <h3 className="mt-3 text-lg font-semibold leading-snug text-gray-900">
-                            <Link href={`/food/${food.id}`} className="hover:underline">
+                            <Link href={foodHref(food.id, food.name)} className="hover:underline">
                               {food.name}
                             </Link>
                           </h3>
@@ -235,7 +238,7 @@ export default function SearchPage() {
                               {food.currency} {food.price.toLocaleString()}
                             </div>
                             <Link
-                              href={`/chefs/${food.chefProfileId}`}
+                              href={chefHref(food.chefProfileId, food.chefDisplayName)}
                               className="line-clamp-1 text-xs text-gray-500 hover:text-gray-800 hover:underline"
                             >
                               by {food.chefDisplayName} ({food.chefCity})
@@ -243,7 +246,7 @@ export default function SearchPage() {
                           </div>
 
                           <Link
-                            href={`/food/${food.id}`}
+                            href={foodHref(food.id, food.name)}
                             className="rounded-lg bg-gray-50 px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-100"
                           >
                             View Details →
@@ -284,5 +287,13 @@ export default function SearchPage() {
         </div>
       )}
     </section>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={<section className="mx-auto max-w-5xl px-4 py-16 text-gray-600">Loading search…</section>}>
+      <SearchPageInner />
+    </Suspense>
   );
 }

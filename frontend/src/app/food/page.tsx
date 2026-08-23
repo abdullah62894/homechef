@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
   listFoods,
@@ -12,8 +13,10 @@ import { resolveImageUrl } from "@/lib/images";
 import { deleteAdminFood } from "@/lib/admin";
 import { fetchMe } from "@/lib/auth";
 import { ApiError } from "@/lib/api";
+import { chefHref, foodHref } from "@/lib/slugs";
 
-export default function FoodDiscoveryPage() {
+function FoodDiscoveryInner() {
+  const searchParams = useSearchParams();
   const [foods, setFoods] = useState<FoodListItem[]>([]);
   const [categories, setCategories] = useState<FoodCategory[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -40,11 +43,21 @@ export default function FoodDiscoveryPage() {
 
   useEffect(() => {
     listFoodCategories()
-      .then((cats) => setCategories(cats))
+      .then((cats) => {
+        setCategories(cats);
+        // Support /food?category=Name links (used by the homepage chips).
+        const wanted = searchParams.get("category");
+        if (wanted) {
+          const match = cats.find(
+            (c) => c.name.toLowerCase() === wanted.toLowerCase() || c.slug === wanted.toLowerCase()
+          );
+          if (match) setSelectedCategory(match.id);
+        }
+      })
       .catch(() => {
         // Fallback silently if categories fail to load
       });
-  }, []);
+  }, [searchParams]);
 
   useEffect(() => {
     let cancelled = false;
@@ -170,7 +183,7 @@ export default function FoodDiscoveryPage() {
                 </div>
 
                 <h2 className="mt-3 text-lg font-semibold text-gray-900 leading-snug">
-                  <Link href={`/food/${food.id}`} className="hover:underline">
+                  <Link href={foodHref(food.id, food.name)} className="hover:underline">
                     {food.name}
                   </Link>
                 </h2>
@@ -184,7 +197,7 @@ export default function FoodDiscoveryPage() {
                     {food.currency} {food.price.toLocaleString()}
                   </div>
                   <Link
-                    href={`/chefs/${food.chefProfileId}`}
+                    href={chefHref(food.chefProfileId, food.chefDisplayName)}
                     className="text-xs text-gray-500 hover:text-gray-800 hover:underline line-clamp-1"
                   >
                     by {food.chefDisplayName} ({food.chefCity})
@@ -192,7 +205,7 @@ export default function FoodDiscoveryPage() {
                 </div>
 
                 <Link
-                  href={`/food/${food.id}`}
+                  href={foodHref(food.id, food.name)}
                   className="rounded-lg bg-gray-50 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-100 transition"
                 >
                   View Details →
@@ -215,5 +228,13 @@ export default function FoodDiscoveryPage() {
         </div>
       )}
     </section>
+  );
+}
+
+export default function FoodDiscoveryPage() {
+  return (
+    <Suspense fallback={<section className="mx-auto max-w-5xl px-4 py-16 text-gray-600">Loading dishes…</section>}>
+      <FoodDiscoveryInner />
+    </Suspense>
   );
 }

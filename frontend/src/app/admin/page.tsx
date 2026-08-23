@@ -21,6 +21,7 @@ import {
 } from "@/lib/admin";
 import type { Report } from "@/lib/reports";
 import { ApiError } from "@/lib/api";
+import { chefHref } from "@/lib/slugs";
 
 type Access =
   | { status: "checking" }
@@ -469,7 +470,7 @@ export default function AdminConsolePage() {
                       {user.roles.includes("Chef") && user.chefProfileId && (
                         <>
                           <Link
-                            href={`/chefs/${user.chefProfileId}`}
+                            href={chefHref(user.chefProfileId)}
                             className="font-medium text-gray-700 hover:text-gray-900 underline text-xs"
                           >
                             View kitchen

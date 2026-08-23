@@ -25,6 +25,7 @@ import {
   type AppNotification,
 } from "@/lib/notifications";
 import { ApiError } from "@/lib/api";
+import { chefHref } from "@/lib/slugs";
 
 export default function MePage() {
   const router = useRouter();
@@ -411,7 +412,7 @@ export default function MePage() {
                       <span className="text-xs text-gray-400">Read</span>
                     )}
                     <Link
-                      href={`/chefs/${message.chefProfileId}`}
+                      href={chefHref(message.chefProfileId, message.chefDisplayName)}
                       className="text-xs text-gray-500 underline"
                     >
                       View your kitchen
@@ -500,7 +501,7 @@ export default function MePage() {
               <li key={message.id} className="rounded-xl border border-gray-200 p-4">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <Link
-                    href={`/chefs/${message.chefProfileId}`}
+                    href={chefHref(message.chefProfileId, message.chefDisplayName)}
                     className="text-sm font-semibold text-gray-900 underline-offset-2 hover:underline"
                   >
                     {message.chefDisplayName}

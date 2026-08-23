@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { listChefs, type ChefListItem } from "@/lib/chefs";
-import { resolveImageUrl } from "@/lib/images";
 import { ApiError } from "@/lib/api";
+import ChefCard from "@/components/ChefCard";
 
 const PAGE_SIZE = 12;
 
@@ -58,38 +58,7 @@ export default function ChefsPage() {
         <>
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {state.items.map((chef) => (
-              <Link
-                key={chef.id}
-                href={`/chefs/${chef.id}`}
-                className="rounded-xl border border-gray-200 p-6 transition hover:border-gray-300 hover:shadow-sm"
-              >
-                {resolveImageUrl(chef.photoThumbnailUrl ?? chef.photoUrl) && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={resolveImageUrl(chef.photoThumbnailUrl ?? chef.photoUrl) ?? ""}
-                    alt={chef.displayName}
-                    className="h-14 w-14 rounded-full border border-gray-200 object-cover"
-                  />
-                )}
-                <h2 className={`text-lg font-semibold ${chef.photoUrl ? "mt-3" : ""}`}>{chef.displayName}</h2>
-                <p className="mt-1 text-sm text-gray-500">
-                  {chef.city}
-                  {chef.area ? `, ${chef.area}` : ""}
-                </p>
-                {chef.cuisines.length > 0 && (
-                  <div className="mt-3 flex flex-wrap gap-1.5">
-                    {chef.cuisines.map((cuisine) => (
-                      <span
-                        key={cuisine}
-                        className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs text-gray-700"
-                      >
-                        {cuisine}
-                      </span>
-                    ))}
-                  </div>
-                )}
-                <p className="mt-3 line-clamp-3 text-sm text-gray-600">{chef.bio}</p>
-              </Link>
+              <ChefCard key={chef.id} chef={chef} />
             ))}
           </div>
 

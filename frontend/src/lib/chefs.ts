@@ -13,6 +13,9 @@ export interface ChefListItem {
   cuisines: string[];
   photoUrl: string | null;
   photoThumbnailUrl: string | null;
+  ratingAverage: number | null;
+  ratingCount: number;
+  startingPrice: number | null;
 }
 
 export interface ChefProfile extends ChefListItem {

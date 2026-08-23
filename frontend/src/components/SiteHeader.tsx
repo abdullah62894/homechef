@@ -47,31 +47,31 @@ export default function SiteHeader() {
         >
           HomeChef
         </Link>
-        <nav className="ml-auto flex items-center gap-4 text-sm">
-          <Link href="/food" className="text-gray-600 hover:text-gray-900 font-medium">
+        <nav className="ml-auto flex items-center gap-4 overflow-x-auto text-sm [-ms-overflow-style:none] [scrollbar-width:none] sm:gap-4 [&::-webkit-scrollbar]:hidden">
+          <Link href="/food" className="whitespace-nowrap text-gray-600 hover:text-gray-900 font-medium">
             Explore Food
           </Link>
-          <Link href="/chefs" className="text-gray-600 hover:text-gray-900">
+          <Link href="/chefs" className="whitespace-nowrap text-gray-600 hover:text-gray-900">
             Chefs
           </Link>
-          <Link href="/search" className="text-gray-600 hover:text-gray-900">
-            Search
-          </Link>
-          <Link href="/locations" className="text-gray-600 hover:text-gray-900">
+          <Link href="/locations" className="whitespace-nowrap text-gray-600 hover:text-gray-900">
             Locations
           </Link>
-          <Link href="/favorites" className="text-gray-600 hover:text-gray-900">
-            Favorites
+          <Link href="/search" className="whitespace-nowrap text-gray-600 hover:text-gray-900">
+            Search
           </Link>
           {user ? (
             <>
-              <Link href="/me" className="text-gray-600 hover:text-gray-900">
+              <Link href="/favorites" className="whitespace-nowrap text-gray-600 hover:text-gray-900">
+                Favorites
+              </Link>
+              <Link href="/me" className="whitespace-nowrap text-gray-600 hover:text-gray-900">
                 My account
               </Link>
               <button
                 type="button"
                 onClick={handleSignOut}
-                className="rounded-lg border border-gray-300 px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50"
+                className="whitespace-nowrap rounded-lg border border-gray-300 px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50"
               >
                 Sign out
               </button>
@@ -79,10 +79,13 @@ export default function SiteHeader() {
           ) : (
             checked && (
               <>
-                <Link href="/login" className="text-gray-600 hover:text-gray-900">
+                <Link href="/login" className="whitespace-nowrap text-gray-600 hover:text-gray-900">
                   Sign in
                 </Link>
-                <Link href="/register" className="text-gray-600 hover:text-gray-900">
+                <Link
+                  href="/register"
+                  className="whitespace-nowrap rounded-lg bg-gray-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-gray-800"
+                >
                   Create account
                 </Link>
               </>

@@ -12,6 +12,7 @@ import {
 import type { ChefListItem } from "@/lib/chefs";
 import type { FoodListItem } from "@/lib/foods";
 import { ApiError } from "@/lib/api";
+import { chefHref, foodHref } from "@/lib/slugs";
 
 type Tab = "chefs" | "foods";
 
@@ -130,7 +131,7 @@ export default function FavoritesPage() {
                 <div>
                   <div className="flex items-start justify-between gap-2">
                     <h3 className="text-lg font-bold text-gray-900">
-                      <Link href={`/chefs/${chef.id}`} className="hover:underline">
+                      <Link href={chefHref(chef.id, chef.displayName)} className="hover:underline">
                         {chef.displayName}
                       </Link>
                     </h3>
@@ -164,7 +165,7 @@ export default function FavoritesPage() {
 
                 <div className="mt-4 border-t border-gray-100 pt-3">
                   <Link
-                    href={`/chefs/${chef.id}`}
+                    href={chefHref(chef.id, chef.displayName)}
                     className="block text-center text-xs font-semibold text-gray-900 hover:underline"
                   >
                     View Kitchen &amp; Menu →
@@ -208,14 +209,14 @@ export default function FavoritesPage() {
                 </div>
 
                 <h3 className="mt-3 text-lg font-bold text-gray-900">
-                  <Link href={`/food/${food.id}`} className="hover:underline">
+                  <Link href={foodHref(food.id, food.name)} className="hover:underline">
                     {food.name}
                   </Link>
                 </h3>
 
                 <p className="mt-1 text-xs text-gray-500">
                   by{" "}
-                  <Link href={`/chefs/${food.chefProfileId}`} className="font-medium text-gray-700 underline">
+                  <Link href={chefHref(food.chefProfileId, food.chefDisplayName)} className="font-medium text-gray-700 underline">
                     {food.chefDisplayName}
                   </Link>
                 </p>
@@ -228,7 +229,7 @@ export default function FavoritesPage() {
                   {food.currency} {food.price.toLocaleString()}
                 </span>
                 <Link
-                  href={`/food/${food.id}`}
+                  href={foodHref(food.id, food.name)}
                   className="rounded-lg bg-gray-50 px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-100 transition"
                 >
                   Details →

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { listChefsInArea } from '@/lib/search';
 import type { ChefListPage } from '@/lib/chefs';
 import { ApiError } from '@/lib/api';
+import { chefHref } from "@/lib/slugs";
 
 const PAGE_SIZE = 10;
 
@@ -70,7 +71,7 @@ export default function AreaPage({ params }: { params: Promise<{ city: string; a
                 <div className="flex-grow">
                   <div className="flex justify-between items-start mb-2">
                     <h2 className="text-xl font-bold text-gray-900">
-                      <Link href={`/chefs/${chef.id}`} className="hover:underline">
+                      <Link href={chefHref(chef.id, chef.displayName)} className="hover:underline">
                         {chef.displayName}
                       </Link>
                     </h2>
@@ -93,7 +94,7 @@ export default function AreaPage({ params }: { params: Promise<{ city: string; a
                   <div className="mt-auto pt-4 border-t border-gray-100 flex items-center justify-between">
                     <span className="text-xs text-gray-500">{chef.city}{chef.area ? `, ${chef.area}` : ''}</span>
                     <Link 
-                      href={`/chefs/${chef.id}`}
+                      href={chefHref(chef.id, chef.displayName)}
                       className="text-sm font-medium text-gray-900 hover:underline"
                     >
                       View profile &rarr;

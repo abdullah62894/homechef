@@ -19,7 +19,7 @@ ahead of their stage unless required as architectural foundations.
 | 10 | Reporting and abuse prevention — content reports, admin report queue, blocklist, message/report rate limits | Done |
 | 11 | Notifications — in-app notifications for new messages and reviews, unread counts, mark read | Done |
 | 12 | Performance optimization — in-process caching (Redis-swappable), response caching, hot-path indexes, load-tested | Done |
-| 13 | SEO and discovery | Planned |
+| 13 | SEO and discovery — slugs, sitemap/robots, structured data, marketplace homepage, mobile polish | Done |
 | 14 | Production deployment | Planned |
 | 15 | Observability | Planned |
 | 16 | Scaling | Planned |
