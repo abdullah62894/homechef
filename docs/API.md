@@ -589,6 +589,10 @@ accounts to the Admin role.
 | Method | Path | Description |
 | ------ | ---- | ----------- |
 | GET | `/api/admin/users` | List accounts — `?search=&role=&page=&pageSize=` |
+| POST | `/api/admin/users` | Create an account (email, password, names, role) |
+| PUT | `/api/admin/users/{id}` | Edit names / role (demoting a chef removes their kitchen) |
+| PUT | `/api/admin/users/{id}/password` | Reset a user's password |
+| DELETE | `/api/admin/users/{id}` | Delete an account; its kitchen and content cascade |
 | POST | `/api/admin/users/{id}/suspend` | Block sign-in (Identity lockout, far future) |
 | POST | `/api/admin/users/{id}/restore` | Lift a suspension |
 | GET | `/api/admin/reviews` | List all reviews newest first (paginated) |
@@ -650,6 +654,19 @@ Abuse-prevention rules:
   reports per day (`REPORT_RATE_LIMITED`, 400).
 - Unknown targets return `REPORT_TARGET_INVALID` (404); reports on deleted
   content cascade away with it.
+
+### Account self-service
+
+Any authenticated user manages their own profile and password:
+
+| Method | Path | Description |
+| ------ | ---- | ----------- |
+| PUT | `/api/users/me` | Update own first/last name |
+| PUT | `/api/users/me/password` | Change own password (requires the current one) |
+
+Errors: `WRONG_CURRENT_PASSWORD` (400), `PASSWORD_REJECTED` (400 — new password
+fails policy). Admin guards: `ADMIN_SELF_ROLE_FORBIDDEN` / `ADMIN_SELF_DELETE_FORBIDDEN`
+(400).
 
 ### Notifications (Stage 11)
 

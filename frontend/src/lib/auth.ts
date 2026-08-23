@@ -55,3 +55,27 @@ export async function logoutUser(): Promise<void> {
 export function fetchMe(): Promise<UserDto> {
   return apiFetch<ApiEnvelope<UserDto>>("/api/users/me").then(unwrap);
 }
+
+export interface UpdateProfileInput {
+  firstName: string;
+  lastName: string;
+}
+
+export interface ChangePasswordInput {
+  currentPassword: string;
+  newPassword: string;
+}
+
+export function updateMyProfile(input: UpdateProfileInput): Promise<UserDto> {
+  return apiFetch<ApiEnvelope<UserDto>>("/api/users/me", {
+    method: "PUT",
+    body: input,
+  }).then(unwrap);
+}
+
+export function changeMyPassword(input: ChangePasswordInput): Promise<void> {
+  return apiFetch<void>("/api/users/me/password", {
+    method: "PUT",
+    body: input,
+  });
+}

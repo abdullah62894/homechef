@@ -127,3 +127,42 @@ export function dismissReport(reportId: string): Promise<Report> {
     method: "POST",
   }).then((envelope) => envelope.data);
 }
+
+export interface CreateAdminUserInput {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  role: "Customer" | "Chef" | "Admin";
+}
+
+export interface UpdateAdminUserInput {
+  firstName: string;
+  lastName: string;
+  role?: "Customer" | "Chef" | "Admin";
+}
+
+export function createAdminUser(input: CreateAdminUserInput): Promise<AdminUser> {
+  return apiFetch<ApiEnvelope<AdminUser>>("/api/admin/users", {
+    method: "POST",
+    body: input,
+  }).then((envelope) => envelope.data);
+}
+
+export function updateAdminUser(userId: string, input: UpdateAdminUserInput): Promise<AdminUser> {
+  return apiFetch<ApiEnvelope<AdminUser>>(`/api/admin/users/${userId}`, {
+    method: "PUT",
+    body: input,
+  }).then((envelope) => envelope.data);
+}
+
+export function setAdminUserPassword(userId: string, newPassword: string): Promise<AdminUser> {
+  return apiFetch<ApiEnvelope<AdminUser>>(`/api/admin/users/${userId}/password`, {
+    method: "PUT",
+    body: { newPassword },
+  }).then((envelope) => envelope.data);
+}
+
+export function deleteAdminUser(userId: string): Promise<void> {
+  return apiFetch<void>(`/api/admin/users/${userId}`, { method: "DELETE" });
+}

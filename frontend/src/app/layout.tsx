@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Geist, Geist_Mono } from "next/font/google";
+import SiteHeader from "@/components/SiteHeader";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -54,39 +55,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <header className="border-b">
-          <div className="mx-auto flex h-14 max-w-5xl items-center gap-6 px-4">
-            <Link href="/" className="text-lg font-semibold tracking-tight text-gray-900 hover:text-gray-700">
-              HomeChef
-            </Link>
-            <nav className="ml-auto flex items-center gap-4 text-sm">
-              <Link href="/food" className="text-gray-600 hover:text-gray-900 font-medium">
-                Explore Food
-              </Link>
-              <Link href="/chefs" className="text-gray-600 hover:text-gray-900">
-                Chefs
-              </Link>
-              <Link href="/search" className="text-gray-600 hover:text-gray-900">
-                Search
-              </Link>
-              <Link href="/locations" className="text-gray-600 hover:text-gray-900">
-                Locations
-              </Link>
-              <Link href="/favorites" className="text-gray-600 hover:text-gray-900">
-                Favorites
-              </Link>
-              <Link href="/login" className="text-gray-600 hover:text-gray-900">
-                Sign in
-              </Link>
-              <Link href="/register" className="text-gray-600 hover:text-gray-900">
-                Create account
-              </Link>
-              <Link href="/me" className="text-gray-600 hover:text-gray-900">
-                My account
-              </Link>
-            </nav>
-          </div>
-        </header>
+        <SiteHeader />
         <main className="flex-1">{children}</main>
         <footer className="border-t">
           <div className="mx-auto max-w-5xl px-4 py-6 text-sm text-gray-500">

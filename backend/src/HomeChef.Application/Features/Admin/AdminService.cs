@@ -82,6 +82,144 @@ public sealed class AdminService : IAdminService
         return await GetUserDtoAsync(target, cancellationToken);
     }
 
+    public async Task<AdminUserDto> CreateUserAsync(
+        CreateAdminUserRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var role = request.Role.Trim();
+        if (!AdminAssignableRoles.Contains(role))
+        {
+            throw new BusinessException(ErrorCodes.InvalidRole, $"Role '{role}' cannot be assigned.");
+        }
+
+        var email = request.Email.Trim();
+        if (await _userManager.FindByEmailAsync(email) is not null)
+        {
+            throw new BusinessException(ErrorCodes.EmailTaken, "An account with this email already exists.");
+        }
+
+        var now = DateTime.UtcNow;
+        var user = new ApplicationUser
+        {
+            Id = Guid.NewGuid(),
+            UserName = email,
+            Email = email,
+            EmailConfirmed = true,
+            FirstName = request.FirstName.Trim(),
+            LastName = request.LastName.Trim(),
+            CreatedAtUtc = now,
+            UpdatedAtUtc = now,
+        };
+
+        var created = await _userManager.CreateAsync(user, request.Password);
+        if (!created.Succeeded)
+        {
+            throw new BusinessException(
+                ErrorCodes.PasswordRejected,
+                string.Join(" ", created.Errors.Select(e => e.Description)));
+        }
+
+        await _userManager.AddToRoleAsync(user, role);
+
+        return await GetUserDtoAsync(user, cancellationToken);
+    }
+
+    public async Task<AdminUserDto> UpdateUserAsync(
+        Guid adminUserId,
+        Guid targetUserId,
+        UpdateAdminUserRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var target = await FindUserOrThrowAsync(targetUserId);
+
+        target.FirstName = request.FirstName.Trim();
+        target.LastName = request.LastName.Trim();
+        target.UpdatedAtUtc = DateTime.UtcNow;
+        var updated = await _userManager.UpdateAsync(target);
+        if (!updated.Succeeded)
+        {
+            throw new BusinessException(
+                ErrorCodes.PasswordRejected,
+                string.Join(" ", updated.Errors.Select(e => e.Description)));
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.Role))
+        {
+            var newRole = request.Role.Trim();
+            if (!AdminAssignableRoles.Contains(newRole))
+            {
+                throw new BusinessException(ErrorCodes.InvalidRole, $"Role '{newRole}' cannot be assigned.");
+            }
+
+            if (targetUserId == adminUserId)
+            {
+                throw new BusinessException(ErrorCodes.AdminSelfRoleForbidden, "You cannot change your own role.");
+            }
+
+            var currentRoles = await _userManager.GetRolesAsync(target);
+            if (!currentRoles.Contains(newRole))
+            {
+                // Demoting a chef removes their kitchen (and its content) with it.
+                if (currentRoles.Contains(Roles.Chef) && newRole != Roles.Chef)
+                {
+                    var profile = await _chefProfileRepository.GetByUserIdAsync(targetUserId, cancellationToken);
+                    if (profile is not null)
+                    {
+                        await _chefProfileRepository.DeleteAsync(profile, cancellationToken);
+                    }
+                }
+
+                await _userManager.RemoveFromRolesAsync(target, currentRoles);
+                await _userManager.AddToRoleAsync(target, newRole);
+            }
+        }
+
+        return await GetUserDtoAsync(target, cancellationToken);
+    }
+
+    public async Task<AdminUserDto> SetPasswordAsync(
+        Guid targetUserId,
+        string newPassword,
+        CancellationToken cancellationToken = default)
+    {
+        var target = await FindUserOrThrowAsync(targetUserId);
+
+        await _userManager.RemovePasswordAsync(target);
+        var added = await _userManager.AddPasswordAsync(target, newPassword);
+        if (!added.Succeeded)
+        {
+            throw new BusinessException(
+                ErrorCodes.PasswordRejected,
+                string.Join(" ", added.Errors.Select(e => e.Description)));
+        }
+
+        await _userManager.ResetAccessFailedCountAsync(target);
+
+        return await GetUserDtoAsync(target, cancellationToken);
+    }
+
+    public async Task DeleteUserAsync(Guid adminUserId, Guid targetUserId, CancellationToken cancellationToken = default)
+    {
+        if (targetUserId == adminUserId)
+        {
+            throw new BusinessException(ErrorCodes.AdminSelfDeleteForbidden, "You cannot delete your own account.");
+        }
+
+        var target = await FindUserOrThrowAsync(targetUserId);
+
+        // The chef profile (and its content) cascades with the account.
+        var result = await _userManager.DeleteAsync(target);
+        if (!result.Succeeded)
+        {
+            throw new BusinessException(
+                ErrorCodes.PasswordRejected,
+                string.Join(" ", result.Errors.Select(e => e.Description)));
+        }
+    }
+
+    /// <summary>Roles an admin may grant: everything except the reserved Moderator role.</summary>
+    private static readonly string[] AdminAssignableRoles = [Roles.Customer, Roles.Chef, Roles.Admin];
+
     public async Task<PagedResult<AdminReviewDto>> ListReviewsAsync(
         int page,
         int pageSize,

@@ -105,3 +105,52 @@ describe("auth lib", () => {
     });
   });
 });
+
+describe("auth lib self-service", () => {
+  const fetchMock = vi.fn();
+
+  beforeEach(() => {
+    vi.stubGlobal("fetch", fetchMock);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    fetchMock.mockReset();
+  });
+
+  it("updates the caller's own profile via PUT", async () => {
+    fetchMock.mockResolvedValue(jsonResponse(200, { data: { ...user, firstName: "Renamed" }, meta: null }));
+
+    const { updateMyProfile } = await import("@/lib/auth");
+    const updated = await updateMyProfile({ firstName: "Renamed", lastName: "User" });
+
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe(`${baseUrl}/api/users/me`);
+    expect(init.method).toBe("PUT");
+    expect(JSON.parse(init.body)).toEqual({ firstName: "Renamed", lastName: "User" });
+    expect(updated.firstName).toBe("Renamed");
+  });
+
+  it("changes the caller's password via PUT", async () => {
+    fetchMock.mockResolvedValue(new Response(null, { status: 204 }));
+
+    const { changeMyPassword } = await import("@/lib/auth");
+    await changeMyPassword({ currentPassword: "Old12345", newPassword: "New12345" });
+
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe(`${baseUrl}/api/users/me/password`);
+    expect(init.method).toBe("PUT");
+    expect(JSON.parse(init.body)).toEqual({ currentPassword: "Old12345", newPassword: "New12345" });
+  });
+
+  it("surfaces WRONG_CURRENT_PASSWORD errors", async () => {
+    fetchMock.mockResolvedValue(jsonResponse(400, {
+      error: { code: "WRONG_CURRENT_PASSWORD", message: "Your current password is incorrect." },
+    }));
+
+    const { changeMyPassword } = await import("@/lib/auth");
+    await expect(
+      changeMyPassword({ currentPassword: "nope", newPassword: "New12345" })
+    ).rejects.toMatchObject({ code: "WRONG_CURRENT_PASSWORD" });
+  });
+});

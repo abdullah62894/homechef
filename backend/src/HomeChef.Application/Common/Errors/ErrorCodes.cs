@@ -39,4 +39,8 @@ public static class ErrorCodes
     public const string ReportAlreadyHandled = "REPORT_ALREADY_HANDLED";
     public const string NotificationNotFound = "NOTIFICATION_NOT_FOUND";
     public const string NotificationForbidden = "NOTIFICATION_FORBIDDEN";
+    public const string WrongCurrentPassword = "WRONG_CURRENT_PASSWORD";
+    public const string PasswordRejected = "PASSWORD_REJECTED";
+    public const string AdminSelfDeleteForbidden = "ADMIN_SELF_DELETE_FORBIDDEN";
+    public const string AdminSelfRoleForbidden = "ADMIN_SELF_ROLE_FORBIDDEN";
 }

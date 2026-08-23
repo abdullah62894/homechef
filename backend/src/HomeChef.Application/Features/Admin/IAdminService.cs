@@ -18,6 +18,25 @@ public interface IAdminService
     /// <summary>Lifts a suspension.</summary>
     Task<AdminUserDto> RestoreUserAsync(Guid targetUserId, CancellationToken cancellationToken = default);
 
+    /// <summary>Creates a new account with any manageable role.</summary>
+    Task<AdminUserDto> CreateUserAsync(CreateAdminUserRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>Edits an account's names and role.</summary>
+    Task<AdminUserDto> UpdateUserAsync(
+        Guid adminUserId,
+        Guid targetUserId,
+        UpdateAdminUserRequest request,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>Admin-forced password reset (no current password needed).</summary>
+    Task<AdminUserDto> SetPasswordAsync(
+        Guid targetUserId,
+        string newPassword,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>Deletes an account; its kitchen and content cascade.</summary>
+    Task DeleteUserAsync(Guid adminUserId, Guid targetUserId, CancellationToken cancellationToken = default);
+
     /// <summary>Lists all reviews, newest first, for moderation.</summary>
     Task<PagedResult<AdminReviewDto>> ListReviewsAsync(
         int page,

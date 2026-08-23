@@ -121,6 +121,59 @@ public sealed class AuthService : IAuthService
         return ToDto(user, roles);
     }
 
+    public async Task<UserDto> UpdateProfileAsync(
+        Guid userId,
+        UpdateProfileRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var user = await FindUserOrThrowAsync(userId);
+
+        user.FirstName = request.FirstName.Trim();
+        user.LastName = request.LastName.Trim();
+        user.UpdatedAtUtc = DateTime.UtcNow;
+
+        var result = await _userManager.UpdateAsync(user);
+        if (!result.Succeeded)
+        {
+            throw new BusinessException(
+                ErrorCodes.RegistrationFailed,
+                string.Join(" ", result.Errors.Select(e => e.Description)));
+        }
+
+        var roles = await _userManager.GetRolesAsync(user);
+        return ToDto(user, roles);
+    }
+
+    public async Task ChangePasswordAsync(
+        Guid userId,
+        ChangePasswordRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var user = await FindUserOrThrowAsync(userId);
+
+        if (!await _userManager.CheckPasswordAsync(user, request.CurrentPassword))
+        {
+            throw new BusinessException(ErrorCodes.WrongCurrentPassword, "Your current password is incorrect.");
+        }
+
+        var result = await _userManager.ChangePasswordAsync(user, request.CurrentPassword, request.NewPassword);
+        if (!result.Succeeded)
+        {
+            throw new BusinessException(
+                ErrorCodes.PasswordRejected,
+                string.Join(" ", result.Errors.Select(e => e.Description)));
+        }
+
+        // A successful change clears any failed-login lockout state.
+        await _userManager.ResetAccessFailedCountAsync(user);
+    }
+
+    private async Task<ApplicationUser> FindUserOrThrowAsync(Guid userId)
+    {
+        return await _userManager.FindByIdAsync(userId.ToString())
+            ?? throw new BusinessException(ErrorCodes.UserNotFound, "User was not found.");
+    }
+
     private static UserDto ToDto(ApplicationUser user, IEnumerable<string> roles)
     {
         return new UserDto

@@ -3,7 +3,13 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { fetchMe, logoutUser, type UserDto } from "@/lib/auth";
+import {
+  fetchMe,
+  logoutUser,
+  updateMyProfile,
+  changeMyPassword,
+  type UserDto,
+} from "@/lib/auth";
 import {
   getUnreadCount,
   listInboxMessages,
@@ -33,12 +39,21 @@ export default function MePage() {
   const [unreadNotifications, setUnreadNotifications] = useState(0);
   const [markingAllRead, setMarkingAllRead] = useState(false);
 
+  const [profileForm, setProfileForm] = useState({ firstName: "", lastName: "" });
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [profileMessage, setProfileMessage] = useState<{ ok: boolean; text: string } | null>(null);
+
+  const [passwordForm, setPasswordForm] = useState({ currentPassword: "", newPassword: "" });
+  const [savingPassword, setSavingPassword] = useState(false);
+  const [passwordMessage, setPasswordMessage] = useState<{ ok: boolean; text: string } | null>(null);
+
   useEffect(() => {
     let cancelled = false;
     fetchMe()
       .then((me) => {
         if (cancelled) return;
         setUser(me);
+        setProfileForm({ firstName: me.firstName, lastName: me.lastName });
 
         const isChef = me.roles.includes("Chef");
         const loaders: Promise<void>[] = [
@@ -112,6 +127,45 @@ export default function MePage() {
   async function handleLogout() {
     await logoutUser();
     router.push("/");
+  }
+
+  async function handleUpdateProfile(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSavingProfile(true);
+    setProfileMessage(null);
+    try {
+      const updated = await updateMyProfile({
+        firstName: profileForm.firstName.trim(),
+        lastName: profileForm.lastName.trim(),
+      });
+      setUser(updated);
+      setProfileMessage({ ok: true, text: "Your details were saved." });
+    } catch (err) {
+      setProfileMessage({
+        ok: false,
+        text: err instanceof ApiError ? err.message : "Unable to save your details.",
+      });
+    } finally {
+      setSavingProfile(false);
+    }
+  }
+
+  async function handleChangePassword(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSavingPassword(true);
+    setPasswordMessage(null);
+    try {
+      await changeMyPassword(passwordForm);
+      setPasswordForm({ currentPassword: "", newPassword: "" });
+      setPasswordMessage({ ok: true, text: "Your password was changed." });
+    } catch (err) {
+      setPasswordMessage({
+        ok: false,
+        text: err instanceof ApiError ? err.message : "Unable to change your password.",
+      });
+    } finally {
+      setSavingPassword(false);
+    }
   }
 
   async function handleMarkNotificationRead(notification: AppNotification) {
@@ -189,6 +243,108 @@ export default function MePage() {
             </dd>
           </div>
         </dl>
+      </div>
+
+      {/* Account settings */}
+      <div className="mt-10 grid gap-6 md:grid-cols-2">
+        <form
+          onSubmit={handleUpdateProfile}
+          className="rounded-xl border border-gray-200 p-6"
+        >
+          <h2 className="text-lg font-bold tracking-tight">Your details</h2>
+          <p className="mt-1 text-xs text-gray-500">Your email ({user.email}) is your login and can&apos;t be changed.</p>
+          <div className="mt-4 grid grid-cols-2 gap-3">
+            <div>
+              <label htmlFor="firstName" className="block text-xs font-semibold uppercase text-gray-700">
+                First name
+              </label>
+              <input
+                id="firstName"
+                type="text"
+                required
+                maxLength={100}
+                value={profileForm.firstName}
+                onChange={(e) => setProfileForm({ ...profileForm, firstName: e.target.value })}
+                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none"
+              />
+            </div>
+            <div>
+              <label htmlFor="lastName" className="block text-xs font-semibold uppercase text-gray-700">
+                Last name
+              </label>
+              <input
+                id="lastName"
+                type="text"
+                required
+                maxLength={100}
+                value={profileForm.lastName}
+                onChange={(e) => setProfileForm({ ...profileForm, lastName: e.target.value })}
+                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none"
+              />
+            </div>
+          </div>
+          {profileMessage && (
+            <p className={`mt-3 text-xs ${profileMessage.ok ? "text-green-700" : "text-red-700"}`}>
+              {profileMessage.text}
+            </p>
+          )}
+          <button
+            type="submit"
+            disabled={savingProfile}
+            className="mt-4 w-full rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50"
+          >
+            {savingProfile ? "Saving…" : "Save details"}
+          </button>
+        </form>
+
+        <form
+          onSubmit={handleChangePassword}
+          className="rounded-xl border border-gray-200 p-6"
+        >
+          <h2 className="text-lg font-bold tracking-tight">Change password</h2>
+          <div className="mt-4 space-y-3">
+            <div>
+              <label htmlFor="currentPassword" className="block text-xs font-semibold uppercase text-gray-700">
+                Current password
+              </label>
+              <input
+                id="currentPassword"
+                type="password"
+                required
+                value={passwordForm.currentPassword}
+                onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
+                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none"
+              />
+            </div>
+            <div>
+              <label htmlFor="newPassword" className="block text-xs font-semibold uppercase text-gray-700">
+                New password
+              </label>
+              <input
+                id="newPassword"
+                type="password"
+                required
+                minLength={8}
+                value={passwordForm.newPassword}
+                onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+                placeholder="8+ chars, upper/lower/digit"
+                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none"
+              />
+            </div>
+          </div>
+          {passwordMessage && (
+            <p className={`mt-3 text-xs ${passwordMessage.ok ? "text-green-700" : "text-red-700"}`}>
+              {passwordMessage.text}
+            </p>
+          )}
+          <button
+            type="submit"
+            disabled={savingPassword}
+            className="mt-4 w-full rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50"
+          >
+            {savingPassword ? "Changing…" : "Change password"}
+          </button>
+        </form>
       </div>
 
       {user.roles.includes("Admin") && (

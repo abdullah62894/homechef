@@ -69,6 +69,64 @@ public sealed class AdminsController : ControllerBase
         return Ok(new ApiResponse<AdminUserDto>(user));
     }
 
+    /// <summary>Creates a new account (email, password, names, role).</summary>
+    [HttpPost("users")]
+    [ProducesResponseType(typeof(ApiResponse<AdminUserDto>), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> CreateUser(
+        CreateAdminUserRequest request,
+        CancellationToken cancellationToken)
+    {
+        var user = await _adminService.CreateUserAsync(request, cancellationToken);
+
+        return StatusCode(StatusCodes.Status201Created, new ApiResponse<AdminUserDto>(user));
+    }
+
+    /// <summary>Edits an account's names and role.</summary>
+    [HttpPut("users/{id:guid}")]
+    [ProducesResponseType(typeof(ApiResponse<AdminUserDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> UpdateUser(
+        Guid id,
+        UpdateAdminUserRequest request,
+        CancellationToken cancellationToken)
+    {
+        var adminUserId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var user = await _adminService.UpdateUserAsync(adminUserId, id, request, cancellationToken);
+
+        return Ok(new ApiResponse<AdminUserDto>(user));
+    }
+
+    /// <summary>Resets a user's password without knowing the current one.</summary>
+    [HttpPut("users/{id:guid}/password")]
+    [ProducesResponseType(typeof(ApiResponse<AdminUserDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> SetPassword(
+        Guid id,
+        SetAdminPasswordRequest request,
+        CancellationToken cancellationToken)
+    {
+        var user = await _adminService.SetPasswordAsync(id, request.NewPassword, cancellationToken);
+
+        return Ok(new ApiResponse<AdminUserDto>(user));
+    }
+
+    /// <summary>Deletes an account; its kitchen and content cascade.</summary>
+    [HttpDelete("users/{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DeleteUser(Guid id, CancellationToken cancellationToken)
+    {
+        var adminUserId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        await _adminService.DeleteUserAsync(adminUserId, id, cancellationToken);
+
+        return NoContent();
+    }
+
     /// <summary>Lists all reviews, newest first, for moderation.</summary>
     [HttpGet("reviews")]
     [ProducesResponseType(typeof(ApiResponse<IReadOnlyList<AdminReviewDto>>), StatusCodes.Status200OK)]

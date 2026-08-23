@@ -1,12 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  createAdminUser,
   deleteAdminChef,
   deleteAdminFood,
   deleteAdminReview,
+  deleteAdminUser,
   listAdminReviews,
   listAdminUsers,
   restoreUser,
+  setAdminUserPassword,
   suspendUser,
+  updateAdminUser,
 } from "@/lib/admin";
 
 const baseUrl = "http://localhost:5050";
@@ -96,5 +100,72 @@ describe("admin lib", () => {
     expect(calls[1][0]).toBe(`${baseUrl}/api/admin/foods/f1`);
     expect(calls[2][0]).toBe(`${baseUrl}/api/admin/chefs/c1`);
     expect(calls.every(([, init]) => init.method === "DELETE")).toBe(true);
+  });
+});
+
+describe("admin user management", () => {
+  const fetchMock = vi.fn();
+
+  beforeEach(() => {
+    vi.stubGlobal("fetch", fetchMock);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    fetchMock.mockReset();
+  });
+
+  it("creates a user with email, password and role", async () => {
+    fetchMock.mockResolvedValue(
+      jsonResponse({ data: { id: "u9", email: "new@test.com", roles: ["Chef"] }, meta: null })
+    );
+
+    const created = await createAdminUser({
+      email: "new@test.com",
+      password: "CreatedPass123",
+      firstName: "New",
+      lastName: "Chef",
+      role: "Chef",
+    });
+
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe(`${baseUrl}/api/admin/users`);
+    expect(init.method).toBe("POST");
+    expect(JSON.parse(init.body).role).toBe("Chef");
+    expect(created.roles).toContain("Chef");
+  });
+
+  it("edits a user's names and role via PUT", async () => {
+    fetchMock.mockImplementation(() =>
+      Promise.resolve(jsonResponse({ data: { id: "u9", roles: ["Admin"] }, meta: null }))
+    );
+
+    await updateAdminUser("u9", { firstName: "A", lastName: "B", role: "Admin" });
+
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe(`${baseUrl}/api/admin/users/u9`);
+    expect(init.method).toBe("PUT");
+    expect(JSON.parse(init.body)).toEqual({ firstName: "A", lastName: "B", role: "Admin" });
+  });
+
+  it("resets a user's password", async () => {
+    fetchMock.mockResolvedValue(jsonResponse({ data: { id: "u9" }, meta: null }));
+
+    await setAdminUserPassword("u9", "ResetPass123");
+
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe(`${baseUrl}/api/admin/users/u9/password`);
+    expect(init.method).toBe("PUT");
+    expect(JSON.parse(init.body)).toEqual({ newPassword: "ResetPass123" });
+  });
+
+  it("deletes a user via DELETE", async () => {
+    fetchMock.mockResolvedValue(new Response(null, { status: 204 }));
+
+    await deleteAdminUser("u9");
+
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe(`${baseUrl}/api/admin/users/u9`);
+    expect(init.method).toBe("DELETE");
   });
 });
