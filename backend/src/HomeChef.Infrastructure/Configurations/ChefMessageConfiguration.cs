@@ -35,6 +35,8 @@ public sealed class ChefMessageConfiguration : IEntityTypeConfiguration<ChefMess
 
         builder.HasIndex(m => new { m.ChefProfileId, m.CreatedAtUtc });
         builder.HasIndex(m => new { m.SenderUserId, m.CreatedAtUtc });
+        // Stage 12: unread-count queries filter on profile + read-at.
+        builder.HasIndex(m => new { m.ChefProfileId, m.ReadAtUtc });
         builder.HasIndex(m => m.ChefProfileId);
         builder.HasIndex(m => m.SenderUserId);
     }

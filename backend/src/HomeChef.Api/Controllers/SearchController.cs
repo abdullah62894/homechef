@@ -61,6 +61,7 @@ public sealed class SearchController : ControllerBase
     /// <summary>Lists all cities/areas with chef counts.</summary>
     [HttpGet("locations")]
     [AllowAnonymous]
+    [ResponseCache(Duration = 300, Location = ResponseCacheLocation.Any)]
     [ProducesResponseType(typeof(ApiResponse<LocationDirectoryDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetLocations(CancellationToken cancellationToken)
     {

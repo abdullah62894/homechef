@@ -3,7 +3,12 @@ using HomeChef.Domain.Chefs;
 
 namespace HomeChef.Application.Features.Chefs;
 
-public sealed record ChefProfileWithDistance(ChefProfile Profile, double? DistanceKm);
+public sealed record ChefProfileWithDistance(
+    ChefProfile Profile,
+    double? DistanceKm,
+    double? RatingAverage = null,
+    int RatingCount = 0,
+    decimal? StartingPrice = null);
 
 public sealed record LocationChefCount(string City, string? Area, int Count);
 

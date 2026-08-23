@@ -3,20 +3,27 @@ using HomeChef.Application.Features.Chefs.Contracts;
 using HomeChef.Application.Features.Foods;
 using HomeChef.Application.Features.Foods.Contracts;
 using HomeChef.Application.Features.Search.Contracts;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace HomeChef.Application.Features.Search;
 
 public sealed class SearchService : ISearchService
 {
+    private const string LocationsKey = "locations:v1";
+    private static readonly TimeSpan LocationsTtl = TimeSpan.FromMinutes(5);
+
     private readonly IChefProfileRepository _chefRepository;
     private readonly IFoodRepository _foodRepository;
+    private readonly IMemoryCache _cache;
 
     public SearchService(
         IChefProfileRepository chefRepository,
-        IFoodRepository foodRepository)
+        IFoodRepository foodRepository,
+        IMemoryCache cache)
     {
         _chefRepository = chefRepository;
         _foodRepository = foodRepository;
+        _cache = cache;
     }
 
     public async Task<SearchResultDto> SearchAsync(
@@ -83,6 +90,18 @@ public sealed class SearchService : ISearchService
     }
 
     public async Task<LocationDirectoryDto> GetLocationsAsync(CancellationToken cancellationToken = default)
+    {
+        if (_cache.TryGetValue(LocationsKey, out LocationDirectoryDto? cached))
+        {
+            return cached!;
+        }
+
+        var directory = await BuildLocationDirectoryAsync(cancellationToken);
+        _cache.Set(LocationsKey, directory, LocationsTtl);
+        return directory;
+    }
+
+    private async Task<LocationDirectoryDto> BuildLocationDirectoryAsync(CancellationToken cancellationToken)
     {
         var counts = await _chefRepository.GetLocationCountsAsync(cancellationToken);
 

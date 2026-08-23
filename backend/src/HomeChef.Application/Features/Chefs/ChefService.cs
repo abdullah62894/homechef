@@ -4,6 +4,7 @@ using HomeChef.Application.Common.Exceptions;
 using HomeChef.Application.Features.Chefs.Contracts;
 using HomeChef.Application.Features.Images.Contracts;
 using HomeChef.Domain.Chefs;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace HomeChef.Application.Features.Chefs;
 
@@ -11,12 +12,16 @@ public sealed class ChefService : IChefService
 {
     private const int MaxCuisines = 10;
     private const int MaxCuisineLength = 50;
+    private const string HomeChefsKey = "chefs:home:v1";
+    private static readonly TimeSpan HomeCacheTtl = TimeSpan.FromSeconds(60);
 
     private readonly IChefProfileRepository _repository;
+    private readonly IMemoryCache _cache;
 
-    public ChefService(IChefProfileRepository repository)
+    public ChefService(IChefProfileRepository repository, IMemoryCache cache)
     {
         _repository = repository;
+        _cache = cache;
     }
 
     public async Task<PagedResult<ChefListItemDto>> ListAsync(
@@ -28,15 +33,36 @@ public sealed class ChefService : IChefService
         page = Math.Max(1, page);
         pageSize = Math.Clamp(pageSize, 1, 50);
 
+        // Stage 12: cache only the anonymous "first page, no filters" list.
+        var unfilteredHome = page == 1 && pageSize == 20
+            && string.IsNullOrWhiteSpace(filter.Search)
+            && string.IsNullOrWhiteSpace(filter.City)
+            && string.IsNullOrWhiteSpace(filter.Area)
+            && string.IsNullOrWhiteSpace(filter.Cuisine)
+            && !filter.Lat.HasValue
+            && !filter.Lng.HasValue
+            && !filter.RadiusKm.HasValue;
+        if (unfilteredHome && _cache.TryGetValue(HomeChefsKey, out PagedResult<ChefListItemDto>? cached))
+        {
+            return cached!;
+        }
+
         var (items, total) = await _repository.ListAsync(filter, page, pageSize, cancellationToken);
         var hasMore = page * pageSize < total;
 
-        return new PagedResult<ChefListItemDto>(
-            items.Select(x => ToListItem(x.Profile, x.DistanceKm)).ToList(),
+        var result = new PagedResult<ChefListItemDto>(
+            items.Select(x => ToListItem(x.Profile, x.DistanceKm, x.RatingAverage, x.RatingCount, x.StartingPrice)).ToList(),
             page,
             pageSize,
             total,
             hasMore);
+
+        if (unfilteredHome)
+        {
+            _cache.Set(HomeChefsKey, result, HomeCacheTtl);
+        }
+
+        return result;
     }
 
     public async Task<ChefProfileDto> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
@@ -154,7 +180,14 @@ public sealed class ChefService : IChefService
             .ToArray();
     }
 
-    public static ChefListItemDto ToListItem(ChefProfile profile, double? distanceKm = null)
+    public static ChefListItemDto ToListItem(ChefProfile profile, double? distanceKm = null) => ToListItem(profile, distanceKm, null, 0, null);
+
+    public static ChefListItemDto ToListItem(
+        ChefProfile profile,
+        double? distanceKm,
+        double? ratingAverage,
+        int ratingCount,
+        decimal? startingPrice)
     {
         return new ChefListItemDto
         {
@@ -170,6 +203,9 @@ public sealed class ChefService : IChefService
             Cuisines = profile.Cuisines,
             PhotoUrl = profile.PhotoUrl,
             PhotoThumbnailUrl = profile.PhotoThumbnailUrl,
+            RatingAverage = ratingAverage,
+            RatingCount = ratingCount,
+            StartingPrice = startingPrice,
         };
     }
 

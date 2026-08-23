@@ -61,6 +61,27 @@ public sealed class ChefProfileRepository : IChefProfileRepository
 
         var allMatching = await query.ToListAsync(cancellationToken);
 
+        // Stage 12: rating/starting-price aggregates in two grouped queries
+        // (avoids per-chef round trips) for the matched profiles.
+        var matchedIds = allMatching.Select(p => p.Id).ToList();
+        var ratings = await _db.Reviews.AsNoTracking()
+            .Where(r => matchedIds.Contains(r.ChefProfileId))
+            .GroupBy(r => r.ChefProfileId)
+            .Select(g => new { ChefProfileId = g.Key, Average = g.Average(x => x.Rating), Count = g.Count() })
+            .ToDictionaryAsync(x => x.ChefProfileId, cancellationToken);
+        var startingPrices = await _db.FoodItems.AsNoTracking()
+            .Where(f => matchedIds.Contains(f.ChefProfileId) && f.IsAvailable)
+            .GroupBy(f => f.ChefProfileId)
+            .Select(g => new { ChefProfileId = g.Key, Min = g.Min(x => x.Price) })
+            .ToDictionaryAsync(x => x.ChefProfileId, cancellationToken);
+
+        var Attach = (ChefProfile p, double? dist) => new ChefProfileWithDistance(
+            p,
+            dist,
+            ratings.GetValueOrDefault(p.Id) is { } r ? Math.Round(r.Average, 2) : null,
+            ratings.TryGetValue(p.Id, out var rc) ? rc.Count : 0,
+            startingPrices.TryGetValue(p.Id, out var sp) ? sp.Min : null);
+
         if (!string.IsNullOrWhiteSpace(filter.Cuisine))
         {
             var cuisine = filter.Cuisine.Trim();
@@ -84,7 +105,7 @@ public sealed class ChefProfileRepository : IChefProfileRepository
                     {
                         dist = Math.Round(CalculateDistanceKm(targetLat, targetLng, p.Latitude.Value, p.Longitude.Value), 2);
                     }
-                    return new ChefProfileWithDistance(p, dist);
+                    return Attach(p, dist);
                 })
                 .Where(x =>
                 {
@@ -105,7 +126,7 @@ public sealed class ChefProfileRepository : IChefProfileRepository
             withDistance = allMatching
                 .OrderBy(p => p.DisplayName)
                 .ThenBy(p => p.Id)
-                .Select(p => new ChefProfileWithDistance(p, null))
+                .Select(p => Attach(p, null))
                 .ToList();
         }
 

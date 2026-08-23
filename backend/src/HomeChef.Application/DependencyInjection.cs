@@ -10,6 +10,7 @@ using HomeChef.Application.Features.Reports;
 using HomeChef.Application.Features.Reviews;
 using HomeChef.Application.Features.Search;
 using HomeChef.Application.Security;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -23,6 +24,10 @@ public static class DependencyInjection
         services.Configure<ImagesOptions>(configuration.GetSection(ImagesOptions.SectionName));
         services.Configure<ModerationOptions>(configuration.GetSection(ModerationOptions.SectionName));
         services.Configure<MessagingOptions>(configuration.GetSection(MessagingOptions.SectionName));
+
+        // Stage 12: in-process distributed-cache stand-in. Swap for
+        // AddStackExchangeRedisCache when a Redis endpoint is available.
+        services.AddMemoryCache();
 
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<ITokenService, JwtTokenService>();

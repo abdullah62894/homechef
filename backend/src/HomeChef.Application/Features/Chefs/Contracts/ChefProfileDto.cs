@@ -25,6 +25,14 @@ public sealed class ChefListItemDto
     public string? PhotoUrl { get; set; }
 
     public string? PhotoThumbnailUrl { get; set; }
+
+    /// <summary>Average review rating (null when unrated).</summary>
+    public double? RatingAverage { get; set; }
+
+    public int RatingCount { get; set; }
+
+    /// <summary>Cheapest available dish price, when the chef has a menu.</summary>
+    public decimal? StartingPrice { get; set; }
 }
 
 public sealed class ChefProfileDto

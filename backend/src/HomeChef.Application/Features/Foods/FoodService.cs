@@ -5,23 +5,32 @@ using HomeChef.Application.Features.Chefs;
 using HomeChef.Application.Features.Foods.Contracts;
 using HomeChef.Application.Features.Images.Contracts;
 using HomeChef.Domain.Foods;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace HomeChef.Application.Features.Foods;
 
 public sealed class FoodService : IFoodService
 {
+    private static readonly TimeSpan HomeCacheTtl = TimeSpan.FromSeconds(60);
+    private static readonly TimeSpan CategoryCacheTtl = TimeSpan.FromMinutes(10);
+    private const string CategoriesKey = "categories:v1";
+    private const string HomeFoodsKey = "foods:home:v1";
+
     private readonly IFoodRepository _foodRepository;
     private readonly IFoodCategoryRepository _categoryRepository;
     private readonly IChefProfileRepository _chefProfileRepository;
+    private readonly IMemoryCache _cache;
 
     public FoodService(
         IFoodRepository foodRepository,
         IFoodCategoryRepository categoryRepository,
-        IChefProfileRepository chefProfileRepository)
+        IChefProfileRepository chefProfileRepository,
+        IMemoryCache cache)
     {
         _foodRepository = foodRepository;
         _categoryRepository = categoryRepository;
         _chefProfileRepository = chefProfileRepository;
+        _cache = cache;
     }
 
     public async Task<PagedResult<FoodListItemDto>> ListFoodsAsync(
@@ -33,15 +42,39 @@ public sealed class FoodService : IFoodService
         page = Math.Max(1, page);
         pageSize = Math.Clamp(pageSize, 1, 50);
 
+        // Stage 12: cache only the anonymous "first page, no filters" list —
+        // the hottest public read. Everything else hits the database.
+        var unfilteredHome = page == 1 && pageSize == 20
+            && string.IsNullOrWhiteSpace(filter.Search)
+            && !filter.CategoryId.HasValue
+            && !filter.ChefId.HasValue
+            && string.IsNullOrWhiteSpace(filter.City)
+            && string.IsNullOrWhiteSpace(filter.Area)
+            && string.IsNullOrWhiteSpace(filter.Cuisine)
+            && !filter.Lat.HasValue
+            && !filter.Lng.HasValue
+            && !filter.IsAvailable.HasValue;
+        if (unfilteredHome && _cache.TryGetValue(HomeFoodsKey, out PagedResult<FoodListItemDto>? cachedFoods))
+        {
+            return cachedFoods!;
+        }
+
         var (items, total) = await _foodRepository.ListAsync(filter, page, pageSize, cancellationToken);
         var hasMore = page * pageSize < total;
 
-        return new PagedResult<FoodListItemDto>(
+        var result = new PagedResult<FoodListItemDto>(
             items.Select(x => ToListItem(x.Item, x.DistanceKm)).ToList(),
             page,
             pageSize,
             total,
             hasMore);
+
+        if (unfilteredHome)
+        {
+            _cache.Set(HomeFoodsKey, result, HomeCacheTtl);
+        }
+
+        return result;
     }
 
     public async Task<FoodItemDto> GetFoodByIdAsync(Guid id, CancellationToken cancellationToken = default)
@@ -103,9 +136,14 @@ public sealed class FoodService : IFoodService
 
     public async Task<IReadOnlyList<FoodCategoryDto>> ListCategoriesAsync(CancellationToken cancellationToken = default)
     {
+        if (_cache.TryGetValue(CategoriesKey, out IReadOnlyList<FoodCategoryDto>? cached))
+        {
+            return cached!;
+        }
+
         var categories = await _categoryRepository.ListAsync(cancellationToken);
 
-        return categories.Select(c => new FoodCategoryDto
+        var dtos = categories.Select(c => new FoodCategoryDto
         {
             Id = c.Id,
             Name = c.Name,
@@ -113,6 +151,9 @@ public sealed class FoodService : IFoodService
             Description = c.Description,
             DisplayOrder = c.DisplayOrder,
         }).ToList();
+
+        _cache.Set(CategoriesKey, dtos, CategoryCacheTtl);
+        return dtos;
     }
 
     public async Task<FoodItemDto> CreateChefFoodAsync(

@@ -18,7 +18,7 @@ ahead of their stage unless required as architectural foundations.
 | 9 | Admin and moderation — admin seeding, account suspension, review/dish/kitchen moderation | Done |
 | 10 | Reporting and abuse prevention — content reports, admin report queue, blocklist, message/report rate limits | Done |
 | 11 | Notifications — in-app notifications for new messages and reviews, unread counts, mark read | Done |
-| 12 | Redis and performance optimization | Planned |
+| 12 | Performance optimization — in-process caching (Redis-swappable), response caching, hot-path indexes, load-tested | Done |
 | 13 | SEO and discovery | Planned |
 | 14 | Production deployment | Planned |
 | 15 | Observability | Planned |

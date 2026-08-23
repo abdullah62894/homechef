@@ -64,5 +64,7 @@ public sealed class FoodItemConfiguration : IEntityTypeConfiguration<FoodItem>
         builder.HasIndex(f => f.CategoryId);
         builder.HasIndex(f => f.IsAvailable);
         builder.HasIndex(f => f.CreatedAtUtc);
+        // Stage 12: "chef's available dishes" listing scan.
+        builder.HasIndex(f => new { f.ChefProfileId, f.IsAvailable });
     }
 }

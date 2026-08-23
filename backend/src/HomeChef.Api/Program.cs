@@ -65,6 +65,9 @@ builder.Services.Configure<ApiBehaviorOptions>(options =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddOpenApi();
 
+// Stage 12: response caching for stable public data (categories, locations).
+builder.Services.AddResponseCaching();
+
 var jwtOptions = builder.Configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>()
                  ?? throw new InvalidOperationException("JWT configuration is missing.");
 
@@ -141,6 +144,8 @@ builder.Services
 var app = builder.Build();
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
+
+app.UseResponseCaching();
 
 if (app.Environment.IsDevelopment())
 {

@@ -7,6 +7,7 @@ using HomeChef.Application.Features.Reports;
 using HomeChef.Application.Features.Reviews.Contracts;
 using HomeChef.Domain.Notifications;
 using HomeChef.Domain.Reviews;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace HomeChef.Application.Features.Reviews;
 
@@ -16,17 +17,20 @@ public sealed class ReviewService : IReviewService
     private readonly IChefProfileRepository _chefProfileRepository;
     private readonly ContentGuard _contentGuard;
     private readonly INotificationService _notificationService;
+    private readonly IMemoryCache _cache;
 
     public ReviewService(
         IReviewRepository reviewRepository,
         IChefProfileRepository chefProfileRepository,
         ContentGuard contentGuard,
-        INotificationService notificationService)
+        INotificationService notificationService,
+        IMemoryCache cache)
     {
         _reviewRepository = reviewRepository;
         _chefProfileRepository = chefProfileRepository;
         _contentGuard = contentGuard;
         _notificationService = notificationService;
+        _cache = cache;
     }
 
     public async Task<PagedResult<ReviewDto>> ListChefReviewsAsync(
@@ -59,7 +63,15 @@ public sealed class ReviewService : IReviewService
         var chef = await _chefProfileRepository.GetByIdAsync(chefProfileId, cancellationToken)
             ?? throw new BusinessException(ErrorCodes.ChefProfileNotFound, "Chef profile was not found.");
 
-        return await _reviewRepository.GetSummaryByChefIdAsync(chef.Id, cancellationToken);
+        var cacheKey = $"rating-summary:{chef.Id}";
+        if (_cache.TryGetValue(cacheKey, out ChefRatingSummaryDto? cached))
+        {
+            return cached!;
+        }
+
+        var summary = await _reviewRepository.GetSummaryByChefIdAsync(chef.Id, cancellationToken);
+        _cache.Set(cacheKey, summary, TimeSpan.FromMinutes(5));
+        return summary;
     }
 
     public async Task<ReviewDto> CreateChefReviewAsync(
@@ -100,6 +112,8 @@ public sealed class ReviewService : IReviewService
 
         var created = await _reviewRepository.GetByIdAsync(review.Id, cancellationToken);
 
+        _cache.Remove($"rating-summary:{chef.Id}");
+
         await _notificationService.NotifyAsync(
             chef.UserId,
             NotificationType.NewReview,
@@ -131,6 +145,7 @@ public sealed class ReviewService : IReviewService
         review.UpdatedAtUtc = DateTime.UtcNow;
 
         await _reviewRepository.UpdateAsync(review, cancellationToken);
+        _cache.Remove($"rating-summary:{review.ChefProfileId}");
 
         var updated = await _reviewRepository.GetByIdAsync(review.Id, cancellationToken);
         return ToDto(updated ?? review);
@@ -150,6 +165,7 @@ public sealed class ReviewService : IReviewService
         }
 
         await _reviewRepository.DeleteAsync(review, cancellationToken);
+        _cache.Remove($"rating-summary:{review.ChefProfileId}");
     }
 
     private static ReviewDto ToDto(Review review)

@@ -71,6 +71,7 @@ public sealed class FoodsController : ControllerBase
     /// <summary>Lists all available food categories.</summary>
     [HttpGet("categories")]
     [AllowAnonymous]
+    [ResponseCache(Duration = 600, Location = ResponseCacheLocation.Any)]
     [ProducesResponseType(typeof(ApiResponse<IReadOnlyList<FoodCategoryDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> ListCategories(CancellationToken cancellationToken)
     {
