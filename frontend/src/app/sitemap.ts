@@ -17,7 +17,7 @@ interface FoodRow {
 }
 interface LocationDirectory {
   data: {
-    cities: { name: string; areas: { name: string }[] }[];
+    cities: { city: string; areas: { area: string }[] }[];
   } | null;
 }
 
@@ -73,15 +73,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }));
 
   const locationEntries: MetadataRoute.Sitemap = [];
-  for (const city of locations?.data?.cities ?? []) {
+  for (const entry of locations?.data?.cities ?? []) {
+    const city = entry.city;
     locationEntries.push({
-      url: `${SITE_URL}/locations/${encodeURIComponent(city.name.toLowerCase())}`,
+      url: `${SITE_URL}/locations/${encodeURIComponent(city.toLowerCase())}`,
       changeFrequency: "weekly",
       priority: 0.6,
     });
-    for (const area of city.areas ?? []) {
+    for (const area of entry.areas ?? []) {
       locationEntries.push({
-        url: `${SITE_URL}/locations/${encodeURIComponent(city.name.toLowerCase())}/${encodeURIComponent(area.name.toLowerCase())}`,
+        url: `${SITE_URL}/locations/${encodeURIComponent(city.toLowerCase())}/${encodeURIComponent(area.area.toLowerCase())}`,
         changeFrequency: "weekly",
         priority: 0.5,
       });
