@@ -27,7 +27,7 @@ public sealed class AdminRepository : IAdminRepository
 
         if (!string.IsNullOrWhiteSpace(query.Search))
         {
-            var term = query.Search.Trim();
+            var term = $"%{query.Search.Trim()}%";
             users = users.Where(u =>
                 EF.Functions.ILike(u.Email!, term) ||
                 EF.Functions.ILike(u.FirstName, term) ||
