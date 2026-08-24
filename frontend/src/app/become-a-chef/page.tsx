@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import BecomeChefCTA from "@/components/BecomeChefCTA";
 
 export const metadata: Metadata = {
   title: "Become a Home Chef — sell your homemade food",
@@ -46,12 +47,7 @@ export default function BecomeAChefPage() {
         no restaurant, no commission, no setup fee while we grow.
       </p>
 
-      <Link
-        href="/register?role=Chef"
-        className="mt-8 inline-block rounded-xl bg-orange-600 px-6 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-700"
-      >
-        Create your free chef account →
-      </Link>
+      <BecomeChefCTA />
 
       <ol className="mt-12 space-y-5">
         {STEPS.map((step, i) => (
@@ -69,12 +65,7 @@ export default function BecomeAChefPage() {
 
       <div className="mt-10 rounded-2xl bg-gray-900 p-6 text-center">
         <p className="text-lg font-semibold text-white">Ready to cook for your neighborhood?</p>
-        <Link
-          href="/register?role=Chef"
-          className="mt-4 inline-block rounded-xl bg-white px-6 py-3 text-sm font-semibold text-gray-900 transition hover:bg-orange-50"
-        >
-          Start your kitchen — it&apos;s free
-        </Link>
+        <BecomeChefCTA variant="light" />
       </div>
     </section>
   );

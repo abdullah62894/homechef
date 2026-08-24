@@ -25,7 +25,8 @@ function RegisterPageInner() {
     setSubmitting(true);
     try {
       await registerUser({ firstName, lastName, email, password, role });
-      router.push("/me");
+      // New chefs go straight to kitchen setup; customers to their account.
+      router.push(role === "Chef" ? "/chefs/me" : "/me");
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Unable to create your account. Please try again.");
     } finally {

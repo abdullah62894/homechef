@@ -2,15 +2,18 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { fetchMe, logoutUser, type UserDto } from "@/lib/auth";
 
 /**
  * Session-aware site header: shows Sign in / Create account only when
  * logged out, and the account link (plus sign out) when authenticated.
+ * Re-checks the session on every route change so login/logout are
+ * reflected immediately without a manual reload.
  */
 export default function SiteHeader() {
   const router = useRouter();
+  const pathname = usePathname();
   const [user, setUser] = useState<UserDto | null>(null);
   const [checked, setChecked] = useState(false);
 
@@ -21,7 +24,7 @@ export default function SiteHeader() {
         if (!cancelled) setUser(me);
       })
       .catch(() => {
-        // Not signed in (or API unreachable) — signed-out nav.
+        if (!cancelled) setUser(null);
       })
       .finally(() => {
         if (!cancelled) setChecked(true);
@@ -29,7 +32,7 @@ export default function SiteHeader() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [pathname]);
 
   async function handleSignOut() {
     await logoutUser();
@@ -65,6 +68,14 @@ export default function SiteHeader() {
               <Link href="/favorites" className="whitespace-nowrap text-gray-600 hover:text-gray-900">
                 Favorites
               </Link>
+              {user.roles.includes("Chef") && (
+                <Link
+                  href="/chefs/me"
+                  className="whitespace-nowrap text-gray-600 hover:text-gray-900"
+                >
+                  My kitchen
+                </Link>
+              )}
               <Link href="/me" className="whitespace-nowrap text-gray-600 hover:text-gray-900">
                 My account
               </Link>

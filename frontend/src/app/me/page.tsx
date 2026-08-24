@@ -24,8 +24,9 @@ import {
   getUnreadNotificationCount,
   type AppNotification,
 } from "@/lib/notifications";
-import { ApiError } from "@/lib/api";
+import { getMyChefProfile, type ChefProfile } from "@/lib/chefs";
 import { chefHref } from "@/lib/slugs";
+import { ApiError } from "@/lib/api";
 
 export default function MePage() {
   const router = useRouter();
@@ -47,6 +48,9 @@ export default function MePage() {
   const [passwordForm, setPasswordForm] = useState({ currentPassword: "", newPassword: "" });
   const [savingPassword, setSavingPassword] = useState(false);
   const [passwordMessage, setPasswordMessage] = useState<{ ok: boolean; text: string } | null>(null);
+
+  const [kitchen, setKitchen] = useState<ChefProfile | null>(null);
+  const [kitchenLoaded, setKitchenLoaded] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -74,6 +78,19 @@ export default function MePage() {
             })
             .catch(() => {}),
         ];
+
+        if (isChef) {
+          loaders.push(
+            getMyChefProfile()
+              .then((profile) => {
+                if (!cancelled) setKitchen(profile);
+              })
+              .catch(() => {})
+              .finally(() => {
+                if (!cancelled) setKitchenLoaded(true);
+              })
+          );
+        }
 
         if (isChef) {
           loaders.push(
@@ -348,6 +365,60 @@ export default function MePage() {
         </form>
       </div>
 
+      {/* Your kitchen (chef role) */}
+      {user.roles.includes("Chef") && kitchenLoaded && (
+        <div className="mt-10 rounded-2xl border border-orange-200 bg-orange-50/60 p-6">
+          {kitchen ? (
+            <>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h2 className="text-xl font-bold tracking-tight">Your kitchen</h2>
+                  <p className="mt-1 text-sm text-gray-600">
+                    {kitchen.displayName} · {kitchen.city}
+                    {kitchen.area ? `, ${kitchen.area}` : ""}
+                  </p>
+                </div>
+                <Link
+                  href={chefHref(kitchen.id, kitchen.displayName)}
+                  className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
+                >
+                  View public page →
+                </Link>
+              </div>
+              <div className="mt-4 flex flex-wrap gap-3">
+                <Link
+                  href="/chefs/me"
+                  className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800"
+                >
+                  Edit kitchen details
+                </Link>
+                <Link
+                  href="/chefs/me/foods"
+                  className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                >
+                  Manage menu
+                </Link>
+              </div>
+            </>
+          ) : (
+            <>
+              <h2 className="text-xl font-bold tracking-tight">Set up your kitchen</h2>
+              <p className="mt-1 max-w-lg text-sm text-gray-600">
+                You registered as a chef — one step left. Create your kitchen
+                profile, add your menu and location, and customers can start
+                discovering you.
+              </p>
+              <Link
+                href="/chefs/me"
+                className="mt-4 inline-block rounded-lg bg-orange-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-orange-700"
+              >
+                Create your kitchen profile →
+              </Link>
+            </>
+          )}
+        </div>
+      )}
+
       {user.roles.includes("Admin") && (
         <div className="mt-8 rounded-xl border border-gray-900/15 bg-gray-900 p-4 flex items-center justify-between">
           <div>
@@ -365,7 +436,7 @@ export default function MePage() {
         </div>
       )}
 
-      {user.roles.includes("Chef") && (
+      {user.roles.includes("Chef") && kitchen && (
         <div className="mt-10">
           <div className="flex items-center gap-3">
             <h2 className="text-xl font-bold tracking-tight">Inbox</h2>
