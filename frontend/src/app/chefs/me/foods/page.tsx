@@ -55,8 +55,19 @@ export default function ChefManageFoodsPage() {
   const [removeImage, setRemoveImage] = useState(false);
 
   const loadData = useCallback(async () => {
-    const [foodsPage, cats] = await Promise.all([listMyFoods(1, 100), listFoodCategories()]);
-    return { foods: foodsPage.items, categories: cats };
+    const [foodsResult, catsResult] = await Promise.allSettled([
+      listMyFoods(1, 100),
+      listFoodCategories(),
+    ]);
+
+    if (foodsResult.status === "rejected") {
+      throw foodsResult.reason;
+    }
+
+    return {
+      foods: foodsResult.value.items,
+      categories: catsResult.status === "fulfilled" ? catsResult.value : [],
+    };
   }, []);
 
   useEffect(() => {
