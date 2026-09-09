@@ -11,10 +11,12 @@ namespace HomeChef.Infrastructure.Storage;
 public sealed class LocalImageStorage : IImageStorage
 {
     private readonly string _root;
+    private readonly ImagesOptions _options;
 
     public LocalImageStorage(IOptions<ImagesOptions> options)
     {
-        _root = Path.GetFullPath(options.Value.StoragePath);
+        _options = options.Value;
+        _root = Path.GetFullPath(_options.StoragePath);
     }
 
     public async Task SaveAsync(string relativePath, Stream content, CancellationToken cancellationToken = default)
@@ -30,5 +32,35 @@ public sealed class LocalImageStorage : IImageStorage
 
         await using var target = File.Create(fullPath);
         await content.CopyToAsync(target, cancellationToken);
+    }
+
+    public Task<Stream?> OpenReadAsync(string relativePath, CancellationToken cancellationToken = default)
+    {
+        var fullPath = Path.GetFullPath(Path.Combine(_root, relativePath));
+        if (!fullPath.StartsWith(_root, StringComparison.OrdinalIgnoreCase) || !File.Exists(fullPath))
+        {
+            return Task.FromResult<Stream?>(null);
+        }
+
+        Stream stream = File.OpenRead(fullPath);
+        return Task.FromResult<Stream?>(stream);
+    }
+
+    public Task DeleteAsync(string relativePath, CancellationToken cancellationToken = default)
+    {
+        var fullPath = Path.GetFullPath(Path.Combine(_root, relativePath));
+        if (fullPath.StartsWith(_root, StringComparison.OrdinalIgnoreCase) && File.Exists(fullPath))
+        {
+            File.Delete(fullPath);
+        }
+
+        return Task.CompletedTask;
+    }
+
+    public string GetPublicUrl(string relativePath)
+    {
+        var prefix = _options.RequestPath.TrimEnd('/');
+        var path = relativePath.Replace('\\', '/').TrimStart('/');
+        return $"{prefix}/{path}";
     }
 }

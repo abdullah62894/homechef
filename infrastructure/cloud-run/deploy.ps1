@@ -88,8 +88,8 @@ gcloud run deploy homechef-api `
     --min-instances 0 `
     --max-instances 2 `
     --port 8080 `
-    --set-env-vars "ASPNETCORE_ENVIRONMENT=Production,DOTNET_HOSTBUILDER__RELOADCONFIGONCHANGE=false,DOTNET_USE_POLLING_FILE_WATCHER=true,DOTNET_EnableDiagnostics=0,Database__AutoMigrate=true" `
-    --set-secrets "ConnectionStrings__Default=connection-string:latest,Jwt__SigningKey=jwt-signing-key:latest,Admin__SeedAdminEmail=admin-seed-email:latest,Admin__SeedAdminPassword=admin-seed-password:latest,Cors__AllowedOrigins__0=cors-allowed-origins:latest"
+    --set-env-vars "ASPNETCORE_ENVIRONMENT=Production,DOTNET_HOSTBUILDER__RELOADCONFIGONCHANGE=false,DOTNET_USE_POLLING_FILE_WATCHER=true,DOTNET_EnableDiagnostics=0,Database__AutoMigrate=true,AWS_ENDPOINT_URL_S3=https://br-delicate-salad-a5lwkpmi.storage.c-1.us-east-2.aws.neon.tech,AWS_REGION=us-east-2,NEON_STORAGE_BUCKET=homechef" `
+    --set-secrets "ConnectionStrings__Default=connection-string:latest,Jwt__SigningKey=jwt-signing-key:latest,Admin__SeedAdminEmail=admin-seed-email:latest,Admin__SeedAdminPassword=admin-seed-password:latest,Cors__AllowedOrigins__0=cors-allowed-origins:latest,AWS_ACCESS_KEY_ID=neon-s3-access-key-id:latest,AWS_SECRET_ACCESS_KEY=neon-s3-secret-access-key:latest"
 
 # Get the service URL
 $serviceUrl = gcloud run services describe homechef-api --region $Region --format="value(status.url)"

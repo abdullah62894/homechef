@@ -183,6 +183,23 @@ app.UseAuthorization();
 
 app.MapControllers();
 
+var requestPathPrefix = imagesOptions.RequestPath.TrimEnd('/');
+app.MapGet($"{requestPathPrefix}/{{**imagePath}}", async (
+    string imagePath,
+    IImageStorage imageStorage,
+    HttpContext context,
+    CancellationToken ct) =>
+{
+    var stream = await imageStorage.OpenReadAsync(imagePath, ct);
+    if (stream is null)
+    {
+        return Results.NotFound();
+    }
+
+    context.Response.Headers.CacheControl = "public, max-age=31536000, immutable";
+    return Results.Stream(stream, "image/webp", enableRangeProcessing: true);
+});
+
 app.Map("/api/{**path}", () => Results.Json(
     new ApiErrorResponse(new ApiError("NOT_FOUND", "The requested resource was not found.")),
     statusCode: StatusCodes.Status404NotFound));

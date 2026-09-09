@@ -81,11 +81,10 @@ public sealed class ImageService : IImageService
             await _storage.SaveAsync(thumbnailPath, thumbnailStream, cancellationToken);
         }
 
-        var prefix = _options.RequestPath.TrimEnd('/');
         return new ImageUploadResult
         {
-            Url = $"{prefix}/{imagePath}",
-            ThumbnailUrl = $"{prefix}/{thumbnailPath}",
+            Url = _storage.GetPublicUrl(imagePath),
+            ThumbnailUrl = _storage.GetPublicUrl(thumbnailPath),
         };
     }
 
