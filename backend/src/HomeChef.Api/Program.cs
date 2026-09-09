@@ -16,7 +16,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 
-// Containers have strict inotify limits (e.g. Render free tier); disable
+// Containers have strict inotify limits; disable
 // config-file reload watchers BEFORE CreateBuilder initializes default configuration sources.
 Environment.SetEnvironmentVariable("DOTNET_HOSTBUILDER__RELOADCONFIGONCHANGE", "false");
 Environment.SetEnvironmentVariable("DOTNET_USE_POLLING_FILE_WATCHER", "true");
@@ -130,10 +130,24 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("Frontend", policy =>
     {
-        policy.WithOrigins(allowedOrigins)
-            .AllowAnyHeader()
-            .AllowAnyMethod()
-            .AllowCredentials();
+        policy.SetIsOriginAllowed(origin =>
+        {
+            if (string.IsNullOrWhiteSpace(origin)) return false;
+            try
+            {
+                var host = new Uri(origin).Host;
+                return host.EndsWith("vercel.app", StringComparison.OrdinalIgnoreCase) ||
+                       host.Equals("localhost", StringComparison.OrdinalIgnoreCase) ||
+                       allowedOrigins.Any(ao => string.Equals(ao, origin, StringComparison.OrdinalIgnoreCase));
+            }
+            catch
+            {
+                return false;
+            }
+        })
+        .AllowAnyHeader()
+        .AllowAnyMethod()
+        .AllowCredentials();
     });
 });
 

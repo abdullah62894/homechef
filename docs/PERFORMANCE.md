@@ -33,7 +33,7 @@ conservative).
 1. **Caching pays off on the hottest paths** — categories +10% RPS and ~12%
    lower P95 warm; foods home page +5% RPS. With the current small dataset
    the database is already fast, so gains are modest locally; they grow with
-   dataset size and network distance (e.g. Render free tier).
+   dataset size and network distance (e.g. remote cloud database).
 2. **The real bottleneck is chef list pagination** — `?page=2` runs at
    ~140 RPS with P99 spikes to 1.2 s. The Stage 4 design loads all matching
    chef profiles into memory for distance/cuisine filtering before
@@ -53,6 +53,4 @@ conservative).
 - Response caching middleware adds `Cache-Control: public` headers on
   `GET /api/foods/categories` (10 min) and `GET /api/locations` (5 min).
 - Swap for Redis later by replacing `AddMemoryCache()` with
-  `AddStackExchangeRedisCache` in `HomeChef.Application.DependencyInjection`
-  — Redis was intentionally skipped because managed Redis on Render is a
-  paid add-on.
+  `AddStackExchangeRedisCache` in `HomeChef.Application.DependencyInjection`.

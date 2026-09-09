@@ -9,11 +9,11 @@ Internet
    |
 Cloudflare            CDN + TLS + WAF
    |
-Next.js               (Vercel or Cloudflare)
+Next.js               (Vercel)
    |
-ASP.NET Core API      (container on Fly.io / Render / VPS / AKS later)
+ASP.NET Core API      (Google Cloud Run container)
    |
-PostgreSQL            (managed)
+PostgreSQL            (Neon serverless / managed)
    |
 Object storage        (Cloudflare R2 / AWS S3 / Azure Blob)  — later stage
 ```
@@ -22,70 +22,66 @@ Object storage        (Cloudflare R2 / AWS S3 / Azure Blob)  — later stage
 
 Uploaded images are currently written to the container's local filesystem
 (`Images__StoragePath`, default `uploads/`) and served by the API under
-`/uploads/...`. The Render container filesystem is **ephemeral** — images
-uploaded on a free-tier deployment are lost on every restart/redeploy. This is
+`/uploads/...`. Container filesystems are **ephemeral** — images
+uploaded without persistent object storage are lost on container restart/redeploy. This is
 acceptable for development; before production, implement an
 `IImageStorage` provider for object storage (Cloudflare R2 / S3 / Azure Blob).
 Only the URL columns in PostgreSQL (`PhotoUrl`, `PhotoThumbnailUrl`,
 `ImageUrl`, `ImageThumbnailUrl`) need to keep working — they already store
 whatever URL the provider returns.
 
-## MVP deployment (Render + Vercel)
+## Production deployment (Google Cloud Run + Neon DB + Vercel)
 
 - **Frontend**: Vercel (Next.js App Router).
-- **Backend**: Render Web Service (Docker container running ASP.NET Core API).
-- **Database**: Render PostgreSQL (managed).
+- **Backend**: Google Cloud Run (container running ASP.NET Core API).
+- **Database**: Neon PostgreSQL (serverless managed).
 
 ---
 
-## Deploying Backend to Render
+## Deploying Backend to Google Cloud Run
 
-### Option A: Using Render Blueprint (`render.yaml`)
-1. In Render Dashboard, click **New +** -> **Blueprint**.
-2. Connect your GitHub repository (`homechef`).
-3. Render reads `render.yaml` and provisions:
-   - `homechef-db` (PostgreSQL Database)
-   - `homechef-api` (Docker Web Service using `infrastructure/docker/Dockerfile.api`)
-4. Fill in the missing environment variable secrets in the Render Dashboard:
-   - `Jwt__SigningKey`: A random string at least 32 characters long.
-   - `Cors__AllowedOrigins__0`: Your Vercel frontend URL (e.g. `https://your-homechef-app.vercel.app`).
+### Option A: Direct Source Deploy (Cloud Build)
+```bash
+gcloud run deploy homechef-api \
+  --source . \
+  --region us-central1 \
+  --platform managed \
+  --allow-unauthenticated \
+  --memory 256Mi \
+  --cpu 1 \
+  --min-instances 0 \
+  --max-instances 2 \
+  --port 8080
+```
 
-### Option B: Manual Web Service Setup on Render
-1. Create a **PostgreSQL** database on Render named `homechef-db`.
-2. Create a **Web Service** on Render:
-   - **Environment**: Docker
-   - **Dockerfile Path**: `./infrastructure/docker/Dockerfile.api`
-   - **Docker Context**: `.` (root of the repo)
-   - **Health Check Path**: `/health`
-3. Configure Environment Variables:
-   - `ASPNETCORE_ENVIRONMENT`: `Production`
-   - `DOTNET_HOSTBUILDER__RELOADCONFIGONCHANGE`: `false`
-   - `DOTNET_USE_POLLING_FILE_WATCHER`: `true`
-   - `DOTNET_EnableDiagnostics`: `0`
-   - `Database__AutoMigrate`: `true`
-   - `ConnectionStrings__Default`: Internal Database URL from `homechef-db`
-   - `Jwt__Issuer`: `HomeChef`
-   - `Jwt__Audience`: `HomeChefWeb`
-   - `Jwt__SigningKey`: (>= 32 chars secret)
-   - `Cors__AllowedOrigins__0`: `https://<your-vercel-app>.vercel.app`
+### Option B: Deployment Script
+Use `infrastructure/cloud-run/deploy.sh` or `infrastructure/cloud-run/DEPLOY-NOW.ps1`.
+
+### Secrets Configuration (Secret Manager)
+Sensitive configurations are stored in Google Cloud Secret Manager:
+- `connection-string`: Neon database connection string
+- `jwt-signing-key`: JWT signing secret (>= 32 chars)
+- `admin-seed-email`: First admin seed email
+- `admin-seed-password`: First admin seed password
+- `cors-allowed-origins`: Allowed frontend origin URL
 
 ---
 
 ## Deploying Frontend to Vercel
 
 1. In Vercel Dashboard, click **Add New...** -> **Project**.
-2. Import your GitHub repository (`homechef`).
+2. Import your repository (`homechef`).
 3. Configure Project Settings:
    - **Framework Preset**: Next.js
-   - **Root Directory**: `frontend` (Click *Edit* and select `frontend`)
+   - **Root Directory**: `frontend`
 4. Configure Environment Variables:
-   - `NEXT_PUBLIC_API_URL`: Your Render backend URL (e.g. `https://homechef-api.onrender.com`)
+   - `NEXT_PUBLIC_API_URL`: Your Cloud Run backend URL (e.g. `https://homechef-api-xxx.run.app`)
 5. Click **Deploy**.
 
 ---
 
 ## Troubleshooting Inotify / Exit 134 on Linux Containers
-Linux container environments (like Render's shared instances) enforce a tight limit on `inotify` file watchers (often 128 max system-wide). ASP.NET Core defaults to enabling file change watchers for `appsettings.json` on startup.
+Linux container environments enforce a tight limit on `inotify` file watchers (often 128 max system-wide). ASP.NET Core defaults to enabling file change watchers for `appsettings.json` on startup.
 This is resolved by:
 1. Setting `DOTNET_HOSTBUILDER__RELOADCONFIGONCHANGE=false` and `DOTNET_USE_POLLING_FILE_WATCHER=true`.
 2. Setting these variables in code in `Program.cs` before `WebApplication.CreateBuilder(args)` is called.

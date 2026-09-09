@@ -95,3 +95,24 @@ See [docs/STAGES.md](docs/STAGES.md) for the full roadmap.
 - [DATABASE.md](docs/DATABASE.md) — schema and conventions
 - [DEPLOYMENT.md](docs/DEPLOYMENT.md) — deployment strategy
 - [docs/ADR](docs/ADR) — architecture decision records
+
+## Deployment
+
+The application is deployed across:
+- **Backend**: Google Cloud Run (containerized ASP.NET Core API)
+- **Database**: Neon PostgreSQL (serverless database)
+- **Frontend**: Vercel (Next.js)
+
+### Deploying to Google Cloud Run + Neon DB
+
+```bash
+# Deploy to Google Cloud Run
+export GCP_PROJECT_ID="your-project-id"
+./infrastructure/cloud-run/deploy.sh
+```
+
+See [infrastructure/cloud-run/DEPLOYMENT.md](infrastructure/cloud-run/DEPLOYMENT.md) for detailed instructions.
+
+### Local Development
+
+Follow the Quick Start guide above for local development with PostgreSQL.

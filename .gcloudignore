@@ -1,0 +1,15 @@
+﻿.git
+.gitignore
+node_modules/
+frontend/
+docs/
+infrastructure/loadtest/
+um-test.log
+bin/
+obj/
+artifacts/
+TestResults/
+*.log
+.vs/
+.idea/
+.zcode/

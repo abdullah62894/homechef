@@ -24,11 +24,13 @@ public static class DependencyInjection
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        var connectionString = configuration.GetConnectionString("Default");
-        if (string.IsNullOrWhiteSpace(connectionString))
+        var rawConnectionString = configuration.GetConnectionString("Default");
+        if (string.IsNullOrWhiteSpace(rawConnectionString))
         {
             throw new InvalidOperationException("Connection string 'Default' is not configured.");
         }
+
+        var connectionString = NormalizeConnectionString(rawConnectionString);
 
         services.AddDbContext<HomeChefDbContext>(options =>
             options.UseNpgsql(connectionString, npgsql =>
@@ -64,5 +66,27 @@ public static class DependencyInjection
         services.AddScoped<INotificationRepository, NotificationRepository>();
 
         return services;
+    }
+
+    private static string NormalizeConnectionString(string connectionString)
+    {
+        if (connectionString.StartsWith("postgres://", StringComparison.OrdinalIgnoreCase) ||
+            connectionString.StartsWith("postgresql://", StringComparison.OrdinalIgnoreCase))
+        {
+            var uri = new Uri(connectionString);
+            var userInfo = uri.UserInfo.Split(':');
+            var builder = new Npgsql.NpgsqlConnectionStringBuilder
+            {
+                Host = uri.Host,
+                Port = uri.Port > 0 ? uri.Port : 5432,
+                Database = uri.AbsolutePath.TrimStart('/'),
+                Username = userInfo.Length > 0 ? Uri.UnescapeDataString(userInfo[0]) : string.Empty,
+                Password = userInfo.Length > 1 ? Uri.UnescapeDataString(userInfo[1]) : string.Empty,
+                SslMode = Npgsql.SslMode.Require
+            };
+            return builder.ConnectionString;
+        }
+
+        return connectionString;
     }
 }
