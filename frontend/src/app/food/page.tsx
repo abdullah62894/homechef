@@ -137,18 +137,49 @@ function FoodDiscoveryInner() {
 
       {/* Content Feed */}
       {loading ? (
-        <div className="py-20 text-center text-sm text-gray-500">Loading dishes…</div>
+        <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className="animate-pulse rounded-xl border border-gray-200 bg-white p-6">
+              <div className="h-36 w-full rounded-lg bg-gray-200" />
+              <div className="mt-4 space-y-2">
+                <div className="h-4 w-20 rounded bg-gray-200" />
+                <div className="h-5 w-3/4 rounded bg-gray-200" />
+                <div className="h-3 w-full rounded bg-gray-200" />
+                <div className="h-3 w-2/3 rounded bg-gray-200" />
+              </div>
+              <div className="mt-6 border-t border-gray-100 pt-4 flex justify-between">
+                <div className="h-5 w-16 rounded bg-gray-200" />
+                <div className="h-5 w-24 rounded bg-gray-200" />
+              </div>
+            </div>
+          ))}
+        </div>
       ) : error ? (
-        <div className="mt-8 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-          {error}
+        <div className="mt-8 rounded-xl border border-red-200 bg-red-50 p-6 text-center">
+          <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-red-100">
+            <svg className="h-5 w-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+          </div>
+          <p className="font-medium text-gray-900">{error}</p>
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className="mt-3 text-sm text-gray-600 underline hover:text-gray-900"
+          >
+            Try again
+          </button>
         </div>
       ) : foods.length === 0 ? (
-        <div className="mt-12 rounded-xl border border-dashed border-gray-300 py-16 text-center">
-          <p className="text-gray-600 font-medium">No dishes found</p>
+        <div className="mt-12 rounded-2xl border border-dashed border-gray-300 py-16 text-center">
+          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-orange-100">
+            <span className="text-2xl">🍽️</span>
+          </div>
+          <p className="text-gray-700 font-medium">No dishes found</p>
           <p className="mt-1 text-sm text-gray-400">
             {searchQuery || selectedCategory
               ? "Try adjusting your search query or category filter."
-              : "Chefs haven't listed dishes yet. Check back soon!"}
+              : "Chefs haven&apos;t listed dishes yet. Check back soon!"}
           </p>
         </div>
       ) : (

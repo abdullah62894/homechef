@@ -33,15 +33,48 @@ export default function CityPage({ params }: { params: Promise<{ city: string }>
   }, [city]);
 
   if (loading) {
-    return <div className="p-8 text-center text-gray-500">Loading city...</div>;
+    return (
+      <div className="mx-auto max-w-4xl px-4 py-12">
+        <div className="animate-pulse space-y-4">
+          <div className="h-4 w-32 rounded bg-gray-200 mb-6" />
+          <div className="h-10 w-64 rounded bg-gray-200" />
+          <div className="h-5 w-48 rounded bg-gray-200" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-8">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="border border-gray-200 rounded-xl p-5 bg-white">
+                <div className="h-5 w-32 rounded bg-gray-200" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (error) {
-    return <div className="p-8 text-center text-red-500">{error}</div>;
+    return (
+      <div className="mx-auto max-w-4xl px-4 py-12">
+        <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-center">
+          <p className="font-medium text-gray-900">{error}</p>
+          <Link href="/locations" className="mt-3 inline-block text-sm text-gray-600 underline hover:text-gray-900">
+            Browse all locations
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   if (!cityData) {
-    return <div className="p-8 text-center text-gray-500">City not found</div>;
+    return (
+      <div className="mx-auto max-w-4xl px-4 py-12">
+        <div className="rounded-xl border border-dashed border-gray-300 p-10 text-center">
+          <p className="font-medium text-gray-700">City not found</p>
+          <Link href="/locations" className="mt-3 inline-block text-sm text-gray-600 underline hover:text-gray-900">
+            Browse all locations
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   return (

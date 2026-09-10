@@ -1,10 +1,13 @@
 using HomeChef.Application.Features.Admin;
 using HomeChef.Application.Features.Chefs;
+using HomeChef.Application.Features.Cuisines;
 using HomeChef.Application.Features.Favorites;
 using HomeChef.Application.Features.Foods;
 using HomeChef.Application.Features.Images;
+using HomeChef.Application.Features.Meals;
 using HomeChef.Application.Features.Messages;
 using HomeChef.Application.Features.Notifications;
+using HomeChef.Application.Features.Orders;
 using HomeChef.Application.Features.Reports;
 using HomeChef.Application.Features.Reviews;
 using HomeChef.Domain.Identity;
@@ -33,6 +36,10 @@ public static class DependencyInjection
         var connectionString = NormalizeConnectionString(rawConnectionString);
 
         services.AddDbContext<HomeChefDbContext>(options =>
+            options.UseNpgsql(connectionString, npgsql =>
+                npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "homechef")));
+
+        services.AddDbContextFactory<HomeChefDbContext>(options =>
             options.UseNpgsql(connectionString, npgsql =>
                 npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "homechef")));
 
@@ -131,6 +138,15 @@ public static class DependencyInjection
         services.AddScoped<IAdminRepository, AdminRepository>();
         services.AddScoped<IReportRepository, ReportRepository>();
         services.AddScoped<INotificationRepository, NotificationRepository>();
+
+        // Marketplace repositories
+        services.AddScoped<ICuisineRepository, CuisineRepository>();
+        services.AddScoped<IMealCategoryRepository, MealCategoryRepository>();
+        services.AddScoped<IChefAvailabilityRepository, ChefAvailabilityRepository>();
+        services.AddScoped<IChefDeliveryMethodRepository, ChefDeliveryMethodRepository>();
+        services.AddScoped<IFoodAvailabilityRepository, FoodAvailabilityRepository>();
+        services.AddScoped<IOrderRepository, OrderRepository>();
+        services.AddScoped<IContactMessageRepository, ContactMessageRepository>();
 
         return services;
     }

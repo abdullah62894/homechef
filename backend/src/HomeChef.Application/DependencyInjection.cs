@@ -1,11 +1,14 @@
 using HomeChef.Application.Features.Admin;
 using HomeChef.Application.Features.Auth;
 using HomeChef.Application.Features.Chefs;
+using HomeChef.Application.Features.Cuisines;
 using HomeChef.Application.Features.Favorites;
 using HomeChef.Application.Features.Foods;
 using HomeChef.Application.Features.Images;
+using HomeChef.Application.Features.Meals;
 using HomeChef.Application.Features.Messages;
 using HomeChef.Application.Features.Notifications;
+using HomeChef.Application.Features.Orders;
 using HomeChef.Application.Features.Reports;
 using HomeChef.Application.Features.Reviews;
 using HomeChef.Application.Features.Search;
@@ -42,6 +45,13 @@ public static class DependencyInjection
         services.AddSingleton<ContentGuard>();
         services.AddScoped<IReportService, ReportService>();
         services.AddScoped<INotificationService, NotificationService>();
+
+        // Marketplace services
+        services.AddScoped<ICuisineService, CuisineService>();
+        services.AddScoped<IMealCategoryService, MealCategoryService>();
+        services.AddScoped<IAvailabilityEngine, AvailabilityEngine>();
+        services.AddScoped<IOrderService, OrderService>();
+        services.AddScoped<IContactMessageService, ContactMessageService>();
 
         return services;
     }

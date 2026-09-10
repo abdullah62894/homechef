@@ -127,6 +127,26 @@ public sealed class AdminsController : ControllerBase
         return NoContent();
     }
 
+    /// <summary>Approves a chef profile for public visibility.</summary>
+    [HttpPost("chefs/{chefId:guid}/approve")]
+    [ProducesResponseType(typeof(ApiResponse<AdminUserDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> ApproveChef(Guid chefId, CancellationToken cancellationToken)
+    {
+        var user = await _adminService.ApproveChefAsync(chefId, cancellationToken);
+        return Ok(new ApiResponse<AdminUserDto>(user));
+    }
+
+    /// <summary>Rejects a chef profile.</summary>
+    [HttpPost("chefs/{chefId:guid}/reject")]
+    [ProducesResponseType(typeof(ApiResponse<AdminUserDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> RejectChef(Guid chefId, [FromBody] RejectChefRequest request, CancellationToken cancellationToken)
+    {
+        var user = await _adminService.RejectChefAsync(chefId, request.Reason, cancellationToken);
+        return Ok(new ApiResponse<AdminUserDto>(user));
+    }
+
     /// <summary>Lists all reviews, newest first, for moderation.</summary>
     [HttpGet("reviews")]
     [ProducesResponseType(typeof(ApiResponse<IReadOnlyList<AdminReviewDto>>), StatusCodes.Status200OK)]
@@ -212,3 +232,5 @@ public sealed class AdminsController : ControllerBase
         return Ok(new ApiResponse<ReportDto>(report));
     }
 }
+
+public record RejectChefRequest(string? Reason);

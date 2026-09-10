@@ -14,7 +14,7 @@ public sealed class ImagesOptions
     public string RequestPath { get; set; } = "/uploads";
 
     /// <summary>Maximum accepted upload size in bytes.</summary>
-    public long MaxFileSizeBytes { get; set; } = 5 * 1024 * 1024;
+    public long MaxFileSizeBytes { get; set; } = 10 * 1024 * 1024;
 
     /// <summary>Longest image edge after optimization.</summary>
     public int MaxDimension { get; set; } = 1600;

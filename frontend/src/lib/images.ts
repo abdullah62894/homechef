@@ -3,8 +3,8 @@ import { apiFetch, apiUpload, API_BASE_URL, type ApiEnvelope } from "./api";
 /** Content types the backend accepts for image uploads. */
 export const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
-/** Client-side mirror of the backend 5 MB limit. */
-export const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
+/** Client-side mirror of the backend 10 MB limit. */
+export const MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024;
 
 /**
  * Client-side pre-validation so users get immediate feedback before the
@@ -15,7 +15,7 @@ export function validateImageFile(file: File): string | null {
     return "Please choose a JPEG, PNG or WebP image.";
   }
   if (file.size > MAX_IMAGE_SIZE_BYTES) {
-    return "Image must be 5 MB or smaller.";
+    return "Image must be 10 MB or smaller.";
   }
   return null;
 }

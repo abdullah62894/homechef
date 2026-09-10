@@ -43,4 +43,19 @@ public static class ErrorCodes
     public const string PasswordRejected = "PASSWORD_REJECTED";
     public const string AdminSelfDeleteForbidden = "ADMIN_SELF_DELETE_FORBIDDEN";
     public const string AdminSelfRoleForbidden = "ADMIN_SELF_ROLE_FORBIDDEN";
+
+    // Marketplace errors
+    public const string ChefNotApproved = "CHEF_NOT_APPROVED";
+    public const string ChefPendingApproval = "CHEF_PENDING_APPROVAL";
+    public const string CuisineNotFound = "CUISINE_NOT_FOUND";
+    public const string MealCategoryNotFound = "MEAL_CATEGORY_NOT_FOUND";
+    public const string OrderNotFound = "ORDER_NOT_FOUND";
+    public const string OrderInvalid = "ORDER_INVALID";
+    public const string ContactMessageInvalid = "CONTACT_MESSAGE_INVALID";
+    public const string DeliveryRadiusExceeded = "DELIVERY_RADIUS_EXCEEDED";
+    public const string DishNotAvailable = "DISH_NOT_AVAILABLE";
+    public const string ChefNotAvailable = "CHEF_NOT_AVAILABLE";
+    public const string PhoneNotConfigured = "PHONE_NOT_CONFIGURED";
+    public const string FoodRequiresCuisine = "FOOD_REQUIRES_CUISINE";
+    public const string FoodRequiresMealCategory = "FOOD_REQUIRES_MEAL_CATEGORY";
 }

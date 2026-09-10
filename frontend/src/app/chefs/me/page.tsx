@@ -168,7 +168,7 @@ export default function ChefProfileMePage() {
             <div className="flex-1">
               <div className="text-sm font-semibold text-gray-900">Profile photo</div>
               <div className="text-xs text-gray-600">
-                JPEG, PNG or WebP up to 5 MB. Optimized to WebP automatically.
+                JPEG, PNG or WebP up to 10 MB. Optimized to WebP automatically.
               </div>
               <div className="mt-2 flex gap-2">
                 <label
@@ -203,17 +203,34 @@ export default function ChefProfileMePage() {
       )}
 
       {existing && (
-        <div className="mt-6 rounded-xl border border-gray-200 bg-gray-50 p-4 flex items-center justify-between">
-          <div>
-            <div className="text-sm font-semibold text-gray-900">Manage Your Dishes</div>
-            <div className="text-xs text-gray-600">Add, edit, or toggle availability of menu items.</div>
+        <div className="mt-6 space-y-3">
+          <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 flex items-center justify-between">
+            <div>
+              <div className="text-sm font-semibold text-gray-900">Manage Your Dishes</div>
+              <div className="text-xs text-gray-600">Add, edit, or toggle availability of menu items.</div>
+            </div>
+            <Link href="/chefs/me/foods" className="rounded-lg bg-gray-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-gray-800 transition">
+              Manage Menu →
+            </Link>
           </div>
-          <Link
-            href="/chefs/me/foods"
-            className="rounded-lg bg-gray-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-gray-800 transition"
-          >
-            Manage Menu →
-          </Link>
+          <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 flex items-center justify-between">
+            <div>
+              <div className="text-sm font-semibold text-gray-900">Weekly Availability</div>
+              <div className="text-xs text-gray-600">Set your working hours for each day of the week.</div>
+            </div>
+            <Link href="/chefs/me/availability" className="rounded-lg bg-gray-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-gray-800 transition">
+              Set Hours →
+            </Link>
+          </div>
+          <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 flex items-center justify-between">
+            <div>
+              <div className="text-sm font-semibold text-gray-900">Incoming Orders</div>
+              <div className="text-xs text-gray-600">View and manage customer orders.</div>
+            </div>
+            <Link href="/chefs/me/orders" className="rounded-lg bg-gray-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-gray-800 transition">
+              View Orders →
+            </Link>
+          </div>
         </div>
       )}
 

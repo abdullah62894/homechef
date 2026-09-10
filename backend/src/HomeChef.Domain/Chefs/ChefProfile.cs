@@ -27,6 +27,24 @@ public class ChefProfile
     /// <summary>Normalized cuisine tags (e.g. "Pakistani", "Bakery").</summary>
     public string[] Cuisines { get; set; } = [];
 
+    /// <summary>Approval status — new chefs start as PendingApproval.</summary>
+    public ChefApprovalStatus ApprovalStatus { get; set; } = ChefApprovalStatus.PendingApproval;
+
+    /// <summary>UTC timestamp when the chef was approved.</summary>
+    public DateTime? ApprovalAtUtc { get; set; }
+
+    /// <summary>Reason if rejected, or null.</summary>
+    public string? RejectionReason { get; set; }
+
+    /// <summary>Public phone number for contact (shown on click).</summary>
+    public string? PhoneNumber { get; set; }
+
+    /// <summary>WhatsApp number for ordering (used in WhatsApp URL).</summary>
+    public string? WhatsAppNumber { get; set; }
+
+    /// <summary>Delivery radius in kilometers from the chef's coordinates.</summary>
+    public double? DeliveryRadiusKm { get; set; }
+
     /// <summary>Optimized WebP photo served from image storage.</summary>
     public string? PhotoUrl { get; set; }
 

@@ -16,12 +16,18 @@ import {
   updateAdminUser,
   setAdminUserPassword,
   deleteAdminUser,
+  approveChef,
+  rejectChef,
   type AdminUser,
   type AdminReview,
 } from "@/lib/admin";
 import type { Report } from "@/lib/reports";
 import { ApiError } from "@/lib/api";
 import { chefHref } from "@/lib/slugs";
+import { listAllCuisines, type Cuisine } from "@/lib/cuisines";
+import { listContactMessages, type ContactMessage } from "@/lib/contact";
+
+type AdminTab = "users" | "reports" | "reviews" | "cuisines" | "messages";
 
 type Access =
   | { status: "checking" }
@@ -55,6 +61,12 @@ export default function AdminConsolePage() {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+
+  const [activeTab, setActiveTab] = useState<AdminTab>("users");
+  const [cuisines, setCuisines] = useState<Cuisine[]>([]);
+  const [loadingCuisines, setLoadingCuisines] = useState(true);
+  const [messages, setMessages] = useState<ContactMessage[]>([]);
+  const [loadingMessages, setLoadingMessages] = useState(true);
 
   const [userModal, setUserModal] = useState<UserModalMode>({ mode: "closed" });
   const [createForm, setCreateForm] = useState(emptyCreateForm);
@@ -155,6 +167,28 @@ export default function AdminConsolePage() {
       cancelled = true;
     };
   }, [access.status, loadReports]);
+
+  useEffect(() => {
+    if (access.status !== "allowed") return;
+    let cancelled = false;
+    setLoadingCuisines(true);
+    listAllCuisines()
+      .then((items) => { if (!cancelled) setCuisines(items); })
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setLoadingCuisines(false); });
+    return () => { cancelled = true; };
+  }, [access.status]);
+
+  useEffect(() => {
+    if (access.status !== "allowed") return;
+    let cancelled = false;
+    setLoadingMessages(true);
+    listContactMessages(1, 50)
+      .then((items) => { if (!cancelled) setMessages(items); })
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setLoadingMessages(false); });
+    return () => { cancelled = true; };
+  }, [access.status]);
 
   async function runAction(id: string, action: () => Promise<void>, doneMessage: string) {
     setBusyId(id);
@@ -309,6 +343,23 @@ export default function AdminConsolePage() {
     }, "Kitchen was removed.");
   }
 
+  async function handleApproveChef(user: AdminUser) {
+    if (!user.chefProfileId) return;
+    await runAction(user.id, async () => {
+      await approveChef(user.chefProfileId!);
+      await refreshUsers();
+    }, `${user.email}'s kitchen was approved.`);
+  }
+
+  async function handleRejectChef(user: AdminUser) {
+    if (!user.chefProfileId) return;
+    const reason = window.prompt("Rejection reason (optional):");
+    await runAction(user.id, async () => {
+      await rejectChef(user.chefProfileId!, reason || undefined);
+      await refreshUsers();
+    }, `${user.email}'s kitchen was rejected.`);
+  }
+
   async function handleResolveReport(report: Report) {
     await runAction(report.id, async () => {
       await resolveReport(report.id);
@@ -357,19 +408,41 @@ export default function AdminConsolePage() {
         </div>
       )}
 
-      {/* Users */}
-      <div className="mt-10">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-xl font-bold tracking-tight">Users</h2>
+      {/* Tab Navigation */}
+      <div className="mt-6 flex flex-wrap gap-1 border-b border-gray-200">
+        {(["users", "reports", "reviews", "cuisines", "messages"] as AdminTab[]).map((tab) => (
           <button
-            type="button"
-            onClick={openCreateUser}
-            className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800"
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`px-4 py-2.5 text-sm font-medium border-b-2 transition ${
+              activeTab === tab
+                ? "border-gray-900 text-gray-900"
+                : "border-transparent text-gray-500 hover:text-gray-700"
+            }`}
           >
-            + Add user
+            {tab === "users" && "Users"}
+            {tab === "reports" && "Reports"}
+            {tab === "reviews" && "Reviews"}
+            {tab === "cuisines" && "Cuisines"}
+            {tab === "messages" && `Messages ${messages.filter(m => !m.isRead).length > 0 ? `(${messages.filter(m => !m.isRead).length})` : ""}`}
           </button>
-        </div>
-        <div className="mt-4 flex flex-wrap gap-2">
+        ))}
+      </div>
+
+      {/* Users Tab */}
+      {activeTab === "users" && (
+        <div className="mt-6">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-xl font-bold tracking-tight">Users</h2>
+            <button
+              type="button"
+              onClick={openCreateUser}
+              className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800"
+            >
+              + Add user
+            </button>
+          </div>
+          <div className="mt-4 flex flex-wrap gap-2">
           <input
             type="search"
             placeholder="Search email or name…"
@@ -477,6 +550,22 @@ export default function AdminConsolePage() {
                           </Link>
                           <button
                             type="button"
+                            onClick={() => handleApproveChef(user)}
+                            disabled={busyId === user.id}
+                            className="font-medium text-emerald-700 hover:text-emerald-900 underline text-xs disabled:opacity-50"
+                          >
+                            Approve
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleRejectChef(user)}
+                            disabled={busyId === user.id}
+                            className="font-medium text-amber-700 hover:text-amber-900 underline text-xs disabled:opacity-50"
+                          >
+                            Reject
+                          </button>
+                          <button
+                            type="button"
                             onClick={() => handleRemoveKitchen(user)}
                             disabled={busyId === user.id}
                             className="font-medium text-red-600 hover:text-red-800 underline text-xs disabled:opacity-50"
@@ -500,107 +589,159 @@ export default function AdminConsolePage() {
             </table>
           </div>
         )}
-      </div>
+        </div>
+      )}
 
-      {/* Reports */}
-      <div className="mt-12">
-        <h2 className="text-xl font-bold tracking-tight">Open reports</h2>
-        {loadingReports ? (
-          <p className="mt-4 text-sm text-gray-500">Loading reports…</p>
-        ) : reports.length === 0 ? (
-          <p className="mt-4 rounded-xl border border-dashed border-gray-300 p-6 text-sm text-gray-500">
-            No open reports — the community is behaving.
-          </p>
-        ) : (
-          <ul className="mt-4 space-y-3">
-            {reports.map((report) => (
-              <li key={report.id} className="rounded-xl border border-amber-200 bg-amber-50/50 p-4">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="text-sm">
-                    <span className="font-semibold text-gray-900">
-                      {report.targetType === "ChefProfile"
-                        ? "Kitchen"
-                        : report.targetType === "FoodItem"
-                          ? "Dish"
-                          : "Review"}
-                    </span>
-                    <span className="text-gray-700"> · {report.targetLabel || report.targetId}</span>
+      {/* Reports Tab */}
+      {activeTab === "reports" && (
+        <div className="mt-6">
+          <h2 className="text-xl font-bold tracking-tight">Open reports</h2>
+          {loadingReports ? (
+            <p className="mt-4 text-sm text-gray-500">Loading reports…</p>
+          ) : reports.length === 0 ? (
+            <p className="mt-4 rounded-xl border border-dashed border-gray-300 p-6 text-sm text-gray-500">
+              No open reports — the community is behaving.
+            </p>
+          ) : (
+            <ul className="mt-4 space-y-3">
+              {reports.map((report) => (
+                <li key={report.id} className="rounded-xl border border-amber-200 bg-amber-50/50 p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="text-sm">
+                      <span className="font-semibold text-gray-900">
+                        {report.targetType === "ChefProfile"
+                          ? "Kitchen"
+                          : report.targetType === "FoodItem"
+                            ? "Dish"
+                            : "Review"}
+                      </span>
+                      <span className="text-gray-700"> · {report.targetLabel || report.targetId}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-gray-500">
+                      <span className="rounded bg-gray-100 px-2 py-0.5 font-medium">{report.reason}</span>
+                      <span>
+                        {new Date(report.createdAtUtc).toLocaleString()} · by {report.reporterName}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 text-xs text-gray-500">
-                    <span className="rounded bg-gray-100 px-2 py-0.5 font-medium">{report.reason}</span>
-                    <span>
-                      {new Date(report.createdAtUtc).toLocaleString()} · by {report.reporterName}
-                    </span>
+                  {report.details && (
+                    <p className="mt-2 text-sm text-gray-700">{report.details}</p>
+                  )}
+                  <div className="mt-3 flex justify-end gap-3">
+                    <button type="button" onClick={() => handleDismissReport(report)} disabled={busyId === report.id}
+                      className="font-medium text-gray-600 hover:text-gray-900 underline text-xs disabled:opacity-50">Dismiss</button>
+                    <button type="button" onClick={() => handleResolveReport(report)} disabled={busyId === report.id}
+                      className="font-medium text-emerald-700 hover:text-emerald-900 underline text-xs disabled:opacity-50">Resolve</button>
                   </div>
-                </div>
-                {report.details && (
-                  <p className="mt-2 text-sm text-gray-700">{report.details}</p>
-                )}
-                <div className="mt-3 flex justify-end gap-3">
-                  <button
-                    type="button"
-                    onClick={() => handleDismissReport(report)}
-                    disabled={busyId === report.id}
-                    className="font-medium text-gray-600 hover:text-gray-900 underline text-xs disabled:opacity-50"
-                  >
-                    Dismiss
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleResolveReport(report)}
-                    disabled={busyId === report.id}
-                    className="font-medium text-emerald-700 hover:text-emerald-900 underline text-xs disabled:opacity-50"
-                  >
-                    Resolve
-                  </button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
 
-      {/* Reviews */}
-      <div className="mt-12">
-        <h2 className="text-xl font-bold tracking-tight">Recent reviews</h2>
-        {loadingReviews ? (
-          <p className="mt-4 text-sm text-gray-500">Loading reviews…</p>
-        ) : reviews.length === 0 ? (
-          <p className="mt-4 rounded-xl border border-dashed border-gray-300 p-6 text-sm text-gray-500">
-            No reviews to moderate.
-          </p>
-        ) : (
-          <ul className="mt-4 space-y-3">
-            {reviews.map((review) => (
-              <li key={review.id} className="rounded-xl border border-gray-200 bg-white p-4">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="text-sm">
-                    <span className="font-semibold text-gray-900">{review.chefDisplayName}</span>
-                    <span className="text-gray-500"> · reviewed by {review.reviewerName}</span>
+      {/* Reviews Tab */}
+      {activeTab === "reviews" && (
+        <div className="mt-6">
+          <h2 className="text-xl font-bold tracking-tight">Recent reviews</h2>
+          {loadingReviews ? (
+            <p className="mt-4 text-sm text-gray-500">Loading reviews…</p>
+          ) : reviews.length === 0 ? (
+            <p className="mt-4 rounded-xl border border-dashed border-gray-300 p-6 text-sm text-gray-500">
+              No reviews to moderate.
+            </p>
+          ) : (
+            <ul className="mt-4 space-y-3">
+              {reviews.map((review) => (
+                <li key={review.id} className="rounded-xl border border-gray-200 bg-white p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="text-sm">
+                      <span className="font-semibold text-gray-900">{review.chefDisplayName}</span>
+                      <span className="text-gray-500"> · reviewed by {review.reviewerName}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-amber-400 text-sm">{"★".repeat(review.rating)}</span>
+                      <span className="text-xs text-gray-400">{new Date(review.createdAtUtc).toLocaleString()}</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-amber-400 text-sm">{"★".repeat(review.rating)}</span>
-                    <span className="text-xs text-gray-400">
-                      {new Date(review.createdAtUtc).toLocaleString()}
+                  <p className="mt-2 text-sm text-gray-700">{review.comment}</p>
+                  <div className="mt-3 flex justify-end">
+                    <button type="button" onClick={() => handleDeleteReview(review)} disabled={busyId === review.id}
+                      className="font-medium text-red-600 hover:text-red-800 underline text-xs disabled:opacity-50">Delete review</button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+
+      {/* Cuisines Tab */}
+      {activeTab === "cuisines" && (
+        <div className="mt-6">
+          <h2 className="text-xl font-bold tracking-tight">Cuisines</h2>
+          {loadingCuisines ? (
+            <p className="mt-4 text-sm text-gray-500">Loading cuisines…</p>
+          ) : (
+            <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+              {cuisines.map((cuisine) => (
+                <div key={cuisine.id} className="rounded-xl border border-gray-200 bg-white p-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-semibold text-gray-900">{cuisine.name}</h3>
+                    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${cuisine.isActive ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}`}>
+                      {cuisine.isActive ? "Active" : "Inactive"}
                     </span>
                   </div>
+                  <p className="mt-1 text-xs text-gray-500">#{cuisine.slug}</p>
                 </div>
-                <p className="mt-2 text-sm text-gray-700">{review.comment}</p>
-                <div className="mt-3 flex justify-end">
-                  <button
-                    type="button"
-                    onClick={() => handleDeleteReview(review)}
-                    disabled={busyId === review.id}
-                    className="font-medium text-red-600 hover:text-red-800 underline text-xs disabled:opacity-50"
-                  >
-                    Delete review
-                  </button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Messages Tab */}
+      {activeTab === "messages" && (
+        <div className="mt-6">
+          <h2 className="text-xl font-bold tracking-tight">Contact Messages</h2>
+          {loadingMessages ? (
+            <p className="mt-4 text-sm text-gray-500">Loading messages…</p>
+          ) : messages.length === 0 ? (
+            <p className="mt-4 rounded-xl border border-dashed border-gray-300 p-6 text-sm text-gray-500">
+              No contact messages yet.
+            </p>
+          ) : (
+            <ul className="mt-4 space-y-3">
+              {messages.map((msg) => (
+                <li key={msg.id} className={`rounded-xl border p-4 ${msg.isRead ? "border-gray-200 bg-white" : "border-blue-200 bg-blue-50/50"}`}>
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="text-sm">
+                      <span className="font-semibold text-gray-900">{msg.name}</span>
+                      <span className="text-gray-500"> · {msg.email} · {msg.phone}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${msg.isRead ? "bg-gray-100 text-gray-500" : "bg-blue-100 text-blue-700"}`}>
+                        {msg.status}
+                      </span>
+                      <span className="text-xs text-gray-400">{new Date(msg.createdAtUtc).toLocaleString()}</span>
+                    </div>
+                  </div>
+                  <p className="mt-2 text-sm text-gray-700">{msg.message}</p>
+                  {!msg.isRead && (
+                    <div className="mt-3 flex justify-end">
+                      <button type="button" onClick={async () => {
+                        const { markContactAsRead } = await import("@/lib/contact");
+                        await markContactAsRead(msg.id);
+                        setMessages(prev => prev.map(m => m.id === msg.id ? { ...m, isRead: true, status: "Read" } : m));
+                      }} className="font-medium text-blue-700 hover:text-blue-900 underline text-xs">Mark as read</button>
+                    </div>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
 
       <p className="mt-10 text-xs text-gray-500">
         To moderate a specific dish, open it from the{" "}

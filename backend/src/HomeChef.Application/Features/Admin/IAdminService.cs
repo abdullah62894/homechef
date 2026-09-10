@@ -49,9 +49,14 @@ public interface IAdminService
     /// <summary>Removes a food item (moderation). Favorites cascade.</summary>
     Task DeleteFoodAsync(Guid foodId, CancellationToken cancellationToken = default);
 
-    /// <summary>
-    /// Removes a chef profile with its foods, reviews, messages and favorites
+    /// <summary>Removes a chef profile with its foods, reviews, messages and favorites
     /// (cascade). The underlying user account is kept.
     /// </summary>
     Task DeleteChefProfileAsync(Guid chefProfileId, CancellationToken cancellationToken = default);
+
+    /// <summary>Approves a chef profile for public visibility.</summary>
+    Task<AdminUserDto> ApproveChefAsync(Guid chefProfileId, CancellationToken cancellationToken = default);
+
+    /// <summary>Rejects a chef profile.</summary>
+    Task<AdminUserDto> RejectChefAsync(Guid chefProfileId, string? reason, CancellationToken cancellationToken = default);
 }

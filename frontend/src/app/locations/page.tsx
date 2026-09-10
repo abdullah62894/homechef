@@ -30,11 +30,41 @@ export default function LocationsPage() {
   }, []);
 
   if (loading) {
-    return <div className="p-8 text-center text-gray-500">Loading locations...</div>;
+    return (
+      <div className="mx-auto max-w-4xl px-4 py-12">
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 w-48 rounded bg-gray-200" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="border border-gray-200 rounded-xl p-6 bg-white">
+                <div className="h-6 w-32 rounded bg-gray-200 mb-4" />
+                <div className="space-y-2">
+                  <div className="h-4 w-24 rounded bg-gray-200" />
+                  <div className="h-4 w-20 rounded bg-gray-200" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (error) {
-    return <div className="p-8 text-center text-red-500">{error}</div>;
+    return (
+      <div className="mx-auto max-w-4xl px-4 py-12">
+        <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-center">
+          <p className="font-medium text-gray-900">{error}</p>
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className="mt-3 text-sm text-gray-600 underline hover:text-gray-900"
+          >
+            Try again
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (

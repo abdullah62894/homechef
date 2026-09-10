@@ -543,7 +543,7 @@ export default function ChefManageFoodsPage() {
                   </div>
                 </div>
                 <p className="mt-1 text-xs text-gray-500">
-                  JPEG, PNG or WebP up to 5 MB. Resized and converted to WebP automatically.
+                  JPEG, PNG or WebP up to 10 MB. Resized and converted to WebP automatically.
                 </p>
               </div>
 

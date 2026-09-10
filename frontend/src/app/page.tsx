@@ -2,6 +2,7 @@ import Link from "next/link";
 import ChefCard from "@/components/ChefCard";
 import type { ChefListItem } from "@/lib/chefs";
 import type { FoodCategory } from "@/lib/foods";
+import type { Cuisine } from "@/lib/cuisines";
 import { apiUrl } from "@/lib/api";
 
 export const revalidate = 120;
@@ -26,14 +27,20 @@ async function fetchJson<T>(path: string, fallback: T): Promise<T> {
 }
 
 export default async function Home() {
-  const [chefsPage, categoriesEnvelope] = await Promise.all([
+  const [chefsPage, categoriesEnvelope, topRatedEnvelope, recentEnvelope, cuisinesEnvelope] = await Promise.all([
     fetchJson<{ data: ChefListItem[] } | null>("/api/chefs?page=1&pageSize=8", null),
     fetchJson<{ data: FoodCategory[] } | null>("/api/foods/categories", null),
+    fetchJson<{ data: ChefListItem[] } | null>("/api/chefs?page=1&pageSize=4", null),
+    fetchJson<{ data: ChefListItem[] } | null>("/api/chefs?page=1&pageSize=4", null),
+    fetchJson<{ data: Cuisine[] } | null>("/api/cuisines", null),
   ]);
 
   const chefs = chefsPage?.data ?? [];
   const categories = (categoriesEnvelope?.data ?? []).slice(0, 8);
   const categoryNames = categories.length > 0 ? categories.map((c) => c.name) : FALLBACK_CATEGORIES;
+  const topRatedChefs = (topRatedEnvelope?.data ?? []).slice(0, 4);
+  const recentChefs = (recentEnvelope?.data ?? []).slice(0, 4);
+  const cuisines = (cuisinesEnvelope?.data ?? []).slice(0, 8);
 
   const websiteJsonLd = {
     "@context": "https://schema.org",
@@ -57,12 +64,20 @@ export default async function Home() {
 
       {/* Hero */}
       <section className="border-b bg-gradient-to-b from-orange-50 via-white to-white">
-        <div className="mx-auto max-w-5xl px-4 py-14 sm:py-20">
-          <h1 className="max-w-2xl text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl">
-            Find homemade food near you
+        <div className="mx-auto max-w-5xl px-4 py-16 sm:py-24">
+          <div className="flex items-center gap-2 mb-4">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-orange-100 px-3 py-1 text-xs font-semibold text-orange-700 ring-1 ring-orange-200">
+              <span className="h-1.5 w-1.5 rounded-full bg-orange-500 animate-pulse" />
+              Trusted by home chefs across the city
+            </span>
+          </div>
+
+          <h1 className="max-w-2xl text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl lg:text-6xl">
+            Homemade food from
+            <span className="text-orange-600"> trusted kitchens</span> near you
           </h1>
-          <p className="mt-4 max-w-xl text-lg text-gray-600">
-            Fresh biryani, BBQ, cakes and daily specials from trusted home
+          <p className="mt-4 max-w-xl text-lg text-gray-600 leading-relaxed">
+            Fresh biryani, BBQ, cakes and daily specials from verified home
             chefs in your city — cooked at home, made to order.
           </p>
 
@@ -73,18 +88,18 @@ export default async function Home() {
               name="q"
               placeholder="Search dishes — biryani, karahi, cake…"
               aria-label="Search dishes"
-              className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm shadow-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+              className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3.5 text-sm shadow-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
             />
             <input
               type="text"
               name="city"
               placeholder="City (e.g. Islamabad)"
               aria-label="City"
-              className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm shadow-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900 sm:w-44"
+              className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3.5 text-sm shadow-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900 sm:w-44"
             />
             <button
               type="submit"
-              className="shrink-0 rounded-xl bg-gray-900 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-gray-800"
+              className="shrink-0 rounded-xl bg-gray-900 px-6 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-gray-800"
             >
               Search
             </button>
@@ -93,13 +108,17 @@ export default async function Home() {
           <div className="mt-6 flex flex-wrap items-center gap-3">
             <Link
               href="/chefs"
-              className="rounded-xl bg-orange-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-700"
+              className="inline-flex items-center gap-2 rounded-xl bg-orange-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-700"
             >
-              Browse Home Chefs →
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              Browse Home Chefs
             </Link>
             <Link
               href="/become-a-chef"
-              className="rounded-xl border border-gray-300 bg-white px-5 py-3 text-sm font-semibold text-gray-800 transition hover:bg-gray-50"
+              className="inline-flex items-center gap-2 rounded-xl border border-gray-300 bg-white px-5 py-3 text-sm font-semibold text-gray-800 transition hover:bg-gray-50"
             >
               Become a Home Chef
             </Link>
@@ -108,7 +127,7 @@ export default async function Home() {
       </section>
 
       {/* Categories */}
-      <section className="mx-auto max-w-5xl px-4 py-10">
+      <section className="mx-auto max-w-5xl px-4 py-10 sm:py-12">
         <div className="flex items-baseline justify-between">
           <h2 className="text-xl font-bold tracking-tight">Popular categories</h2>
           <Link href="/food" className="text-sm text-gray-600 underline hover:text-gray-900">
@@ -128,10 +147,39 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* Trending chefs */}
-      <section className="mx-auto max-w-5xl px-4 pb-12">
+      {/* Cuisines */}
+      {cuisines.length > 0 && (
+        <section className="mx-auto max-w-5xl px-4 py-10 sm:py-12">
+          <div className="flex items-baseline justify-between">
+            <h2 className="text-xl font-bold tracking-tight">Browse by Cuisine</h2>
+            <Link href="/cuisines" className="text-sm text-gray-600 underline hover:text-gray-900">
+              All cuisines
+            </Link>
+          </div>
+          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {cuisines.map((c) => (
+              <Link
+                key={c.id}
+                href={`/cuisines/${c.id}`}
+                className="group rounded-xl border border-gray-200 bg-white p-4 text-center transition hover:border-orange-300 hover:shadow-sm"
+              >
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-orange-100 text-xl group-hover:bg-orange-200 transition">
+                  🍽️
+                </div>
+                <p className="mt-2 text-sm font-semibold text-gray-900 group-hover:text-orange-600">{c.name}</p>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Trending Near You */}
+      <section className="mx-auto max-w-5xl px-4 pb-10 sm:pb-14">
         <div className="flex items-baseline justify-between">
-          <h2 className="text-xl font-bold tracking-tight">Home chefs to try</h2>
+          <div>
+            <h2 className="text-xl font-bold tracking-tight">Trending Near You</h2>
+            <p className="mt-1 text-sm text-gray-500">Home chefs loved by your community</p>
+          </div>
           <Link href="/chefs" className="text-sm text-gray-600 underline hover:text-gray-900">
             View all
           </Link>
@@ -139,6 +187,9 @@ export default async function Home() {
 
         {chefs.length === 0 ? (
           <div className="mt-6 rounded-2xl border border-dashed border-gray-300 p-10 text-center">
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-orange-100">
+              <span className="text-2xl">👩‍🍳</span>
+            </div>
             <p className="font-medium text-gray-700">Chefs are joining soon</p>
             <p className="mt-1 text-sm text-gray-500">
               Be the first — turn your home kitchen into a food business.
@@ -159,9 +210,49 @@ export default async function Home() {
         )}
       </section>
 
+      {/* Top Rated Chefs */}
+      {topRatedChefs.length > 0 && (
+        <section className="mx-auto max-w-5xl px-4 pb-10 sm:pb-14">
+          <div className="flex items-baseline justify-between">
+            <div>
+              <h2 className="text-xl font-bold tracking-tight">Top Rated Chefs</h2>
+              <p className="mt-1 text-sm text-gray-500">Highest rated home kitchens</p>
+            </div>
+            <Link href="/chefs" className="text-sm text-gray-600 underline hover:text-gray-900">
+              View all
+            </Link>
+          </div>
+          <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {topRatedChefs.map((chef) => (
+              <ChefCard key={chef.id} chef={chef} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Recently Added */}
+      {recentChefs.length > 0 && (
+        <section className="mx-auto max-w-5xl px-4 pb-10 sm:pb-14">
+          <div className="flex items-baseline justify-between">
+            <div>
+              <h2 className="text-xl font-bold tracking-tight">Recently Added</h2>
+              <p className="mt-1 text-sm text-gray-500">New home kitchens in your area</p>
+            </div>
+            <Link href="/chefs" className="text-sm text-gray-600 underline hover:text-gray-900">
+              View all
+            </Link>
+          </div>
+          <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {recentChefs.map((chef) => (
+              <ChefCard key={chef.id} chef={chef} />
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* Become a chef band */}
       <section className="border-t bg-gray-900">
-        <div className="mx-auto max-w-5xl px-4 py-14">
+        <div className="mx-auto max-w-5xl px-4 py-14 sm:py-16">
           <div className="flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-center">
             <div>
               <h2 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
@@ -184,7 +275,7 @@ export default async function Home() {
             {[
               ["1", "Create your chef profile"],
               ["2", "Add your menu & prices"],
-              ["3", "Set your location"],
+              ["3", "Set your location & hours"],
               ["4", "Get discovered & ordered"],
             ].map(([step, label]) => (
               <li key={step} className="rounded-xl border border-gray-700 bg-gray-800/60 p-4">

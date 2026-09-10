@@ -1,9 +1,12 @@
 using HomeChef.Domain.Chefs;
+using HomeChef.Domain.Cuisines;
 using HomeChef.Domain.Favorites;
 using HomeChef.Domain.Foods;
 using HomeChef.Domain.Identity;
+using HomeChef.Domain.Meals;
 using HomeChef.Domain.Messages;
 using HomeChef.Domain.Notifications;
+using HomeChef.Domain.Orders;
 using HomeChef.Domain.Reports;
 using HomeChef.Domain.Reviews;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -35,6 +38,26 @@ public class HomeChefDbContext : IdentityDbContext<ApplicationUser, ApplicationR
     public DbSet<ContentReport> ContentReports => Set<ContentReport>();
 
     public DbSet<Notification> Notifications => Set<Notification>();
+
+    public DbSet<Cuisine> Cuisines => Set<Cuisine>();
+
+    public DbSet<FoodCuisine> FoodCuisines => Set<FoodCuisine>();
+
+    public DbSet<MealCategory> MealCategories => Set<MealCategory>();
+
+    public DbSet<FoodMealCategory> FoodMealCategories => Set<FoodMealCategory>();
+
+    public DbSet<ChefAvailability> ChefAvailabilities => Set<ChefAvailability>();
+
+    public DbSet<ChefDeliveryMethod> ChefDeliveryMethods => Set<ChefDeliveryMethod>();
+
+    public DbSet<FoodAvailability> FoodAvailabilities => Set<FoodAvailability>();
+
+    public DbSet<Order> Orders => Set<Order>();
+
+    public DbSet<OrderItem> OrderItems => Set<OrderItem>();
+
+    public DbSet<ContactMessage> ContactMessages => Set<ContactMessage>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

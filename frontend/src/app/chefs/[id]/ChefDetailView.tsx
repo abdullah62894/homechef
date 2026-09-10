@@ -17,6 +17,7 @@ import {
   removeChefFavorite,
 } from "@/lib/favorites";
 import { sendChefMessage } from "@/lib/messages";
+import { getChefAvailability, getDayName, type ChefAvailability } from "@/lib/availability";
 import { resolveImageUrl } from "@/lib/images";
 import ReportButton from "@/components/ReportButton";
 import { ApiError } from "@/lib/api";
@@ -31,6 +32,7 @@ type LoadState =
       foods: FoodListItem[];
       reviews: Review[];
       summary: ChefRatingSummary;
+      availability: ChefAvailability[];
     };
 
 export default function ChefDetailView({ id }: { id: string }) {
@@ -57,13 +59,14 @@ export default function ChefDetailView({ id }: { id: string }) {
       listChefFoods(id, undefined, 1, 50),
       listChefReviews(id, 1, 50),
       getChefRatingSummary(id),
+      getChefAvailability(id).catch(() => [] as ChefAvailability[]),
     ]);
   }, [id]);
 
   useEffect(() => {
     let cancelled = false;
     loadData()
-      .then(([chef, foodsPage, reviewsPage, summary]) => {
+      .then(([chef, foodsPage, reviewsPage, summary, availability]) => {
         if (!cancelled) {
           setState({
             status: "ready",
@@ -71,6 +74,7 @@ export default function ChefDetailView({ id }: { id: string }) {
             foods: foodsPage.items,
             reviews: reviewsPage.items,
             summary,
+            availability,
           });
         }
       })
@@ -185,23 +189,45 @@ export default function ChefDetailView({ id }: { id: string }) {
   }
 
   if (state.status === "loading") {
-    return <section className="mx-auto max-w-5xl px-4 py-16 text-gray-600">Loading chef…</section>;
+    return (
+      <section className="mx-auto max-w-5xl px-4 py-16">
+        <div className="animate-pulse space-y-6">
+          <div className="h-4 w-48 rounded bg-gray-200" />
+          <div className="rounded-2xl border border-gray-200 bg-white p-6 sm:p-8">
+            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+              <div className="flex items-start gap-4">
+                <div className="h-20 w-20 rounded-full bg-gray-200" />
+                <div className="space-y-2">
+                  <div className="h-8 w-64 rounded bg-gray-200" />
+                  <div className="h-4 w-40 rounded bg-gray-200" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
   }
 
   if (state.status === "error") {
     return (
       <section className="mx-auto max-w-5xl px-4 py-16">
-        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {state.message}
+        <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-center">
+          <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-red-100">
+            <svg className="h-5 w-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+          </div>
+          <p className="font-medium text-gray-900">{state.message}</p>
+          <Link href="/chefs" className="mt-4 inline-block text-sm text-gray-600 underline">
+            Browse all chefs
+          </Link>
         </div>
-        <Link href="/chefs" className="mt-6 inline-block text-sm text-gray-600 underline">
-          Back to chefs
-        </Link>
       </section>
     );
   }
 
-  const { chef, foods, reviews, summary } = state;
+  const { chef, foods, reviews, summary, availability } = state;
 
   return (
     <section className="mx-auto max-w-5xl px-4 py-12 sm:py-16">
@@ -217,25 +243,41 @@ export default function ChefDetailView({ id }: { id: string }) {
       <div className="mt-6 rounded-2xl border border-gray-200 bg-white p-6 sm:p-8">
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
           <div className="flex items-start gap-4">
-            {resolveImageUrl(chef.photoThumbnailUrl ?? chef.photoUrl) && (
+            {resolveImageUrl(chef.photoThumbnailUrl ?? chef.photoUrl) ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={resolveImageUrl(chef.photoThumbnailUrl ?? chef.photoUrl) ?? ""}
                 alt={chef.displayName}
-                className="h-20 w-20 rounded-full border border-gray-200 object-cover"
+                className="h-20 w-20 rounded-full border-2 border-gray-200 object-cover"
               />
+            ) : (
+              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-orange-100 to-orange-50 text-3xl">
+                👩‍🍳
+              </div>
             )}
             <div>
-              <h1 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">{chef.displayName}</h1>
-              <p className="mt-2 text-base text-gray-600">
-                📍 {chef.city}
+              <div className="flex items-center gap-2">
+                <h1 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">{chef.displayName}</h1>
+                <span className="inline-flex items-center gap-1 rounded-full bg-orange-50 px-2.5 py-0.5 text-xs font-semibold text-orange-700 ring-1 ring-orange-200">
+                  <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.403 12.652a3 3 0 000-5.304 3 3 0 00-3.75-3.751 3 3 0 00-5.305 0 3 3 0 00-3.751 3.75 3 3 0 000 5.305 3 3 0 003.75 3.751 3 3 0 005.305 0 3 3 0 003.751-3.75zm-2.546-4.46a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clipRule="evenodd" />
+                  </svg>
+                  Verified Chef
+                </span>
+              </div>
+              <p className="mt-2 flex items-center gap-1.5 text-base text-gray-600">
+                <svg className="h-4 w-4 shrink-0 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                {chef.city}
                 {chef.area ? `, ${chef.area}` : ""}
                 {chef.address ? ` • ${chef.address}` : ""}
               </p>
             </div>
           </div>
 
-          {/* Actions & Rating Badge */}
+          {/* Primary CTA & Rating */}
           <div className="flex flex-wrap items-center gap-3 self-start">
             <button
               type="button"
@@ -248,7 +290,7 @@ export default function ChefDetailView({ id }: { id: string }) {
               }`}
             >
               <span>{isFavorited ? "♥" : "♡"}</span>
-              <span>{isFavorited ? "Favorited" : "Favorite Kitchen"}</span>
+              <span>{isFavorited ? "Favorited" : "Favorite"}</span>
             </button>
 
             <div className="flex items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-4 py-2">
@@ -269,7 +311,8 @@ export default function ChefDetailView({ id }: { id: string }) {
               <span
                 key={cuisine}
                 className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700"
-              >                {cuisine}
+              >
+                {cuisine}
               </span>
             ))}
           </div>
@@ -277,19 +320,55 @@ export default function ChefDetailView({ id }: { id: string }) {
 
         <p className="mt-6 text-base text-gray-700 leading-relaxed whitespace-pre-line">{chef.bio}</p>
 
+        {availability.length > 0 && (
+          <div className="mt-6 rounded-xl border border-gray-200 bg-gray-50 p-4">
+            <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-1.5">
+              <svg className="h-4 w-4 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Weekly Availability
+            </h3>
+            <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+              {[0, 1, 2, 3, 4, 5, 6].map((day) => {
+                const window = availability.find((a) => a.dayOfWeek === day);
+                const isOpen = window?.isActive;
+                return (
+                  <div key={day} className={`flex items-center justify-between rounded-lg px-3 py-1.5 text-sm ${isOpen ? "bg-green-50" : "bg-gray-100"}`}>
+                    <span className={`font-medium ${isOpen ? "text-green-700" : "text-gray-400"}`}>{getDayName(day)}</span>
+                    {isOpen ? (
+                      <span className="text-green-600 text-xs">{window!.openTime} – {window!.closeTime}{window!.label ? ` (${window!.label})` : ""}</span>
+                    ) : (
+                      <span className="text-gray-400 text-xs italic">Closed</span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         <div className="mt-4 flex justify-end">
           <ReportButton targetType="ChefProfile" targetId={chef.id} targetName="kitchen" />
         </div>
       </div>
 
-      {/* Contact Chef */}
-      <div className="mt-8 rounded-2xl border border-gray-200 bg-white p-6 sm:p-8">
-        <h2 className="text-lg font-semibold text-gray-900">Contact {chef.displayName}</h2>
-        <p className="mt-1 text-xs text-gray-500">
-          Ask about availability, custom orders, or delivery — your message goes straight to the chef&apos;s inbox.
-        </p>
+      {/* Contact Chef — Primary CTA Section */}
+      <div className="mt-8 rounded-2xl border-2 border-orange-200 bg-gradient-to-br from-orange-50 to-white p-6 sm:p-8">
+        <div className="flex items-start gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-orange-100">
+            <svg className="h-5 w-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            </svg>
+          </div>
+          <div className="flex-1">
+            <h2 className="text-lg font-semibold text-gray-900">Contact {chef.displayName}</h2>
+            <p className="mt-1 text-xs text-gray-500">
+              Ask about availability, custom orders, or delivery — your message goes straight to the chef&apos;s inbox.
+            </p>
+          </div>
+        </div>
 
-        <form onSubmit={handleContactSubmit} className="mt-4 space-y-3">
+        <form onSubmit={handleContactSubmit} className="mt-5 space-y-3">
           {contactError && (
             <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-700">
               {contactError}
@@ -316,9 +395,9 @@ export default function ChefDetailView({ id }: { id: string }) {
           <button
             type="submit"
             disabled={sendingContact}
-            className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white shadow-xs hover:bg-gray-800 transition disabled:opacity-50"
+            className="w-full sm:w-auto rounded-lg bg-orange-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-orange-700 transition disabled:opacity-50"
           >
-            {sendingContact ? "Sending…" : "Send message"}
+            {sendingContact ? "Sending…" : "Send message to chef"}
           </button>
         </form>
       </div>

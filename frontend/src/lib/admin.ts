@@ -166,3 +166,16 @@ export function setAdminUserPassword(userId: string, newPassword: string): Promi
 export function deleteAdminUser(userId: string): Promise<void> {
   return apiFetch<void>(`/api/admin/users/${userId}`, { method: "DELETE" });
 }
+
+export function approveChef(chefProfileId: string): Promise<AdminUser> {
+  return apiFetch<ApiEnvelope<AdminUser>>(`/api/admin/chefs/${chefProfileId}/approve`, {
+    method: "POST",
+  }).then((envelope) => envelope.data);
+}
+
+export function rejectChef(chefProfileId: string, reason?: string): Promise<AdminUser> {
+  return apiFetch<ApiEnvelope<AdminUser>>(`/api/admin/chefs/${chefProfileId}/reject`, {
+    method: "POST",
+    body: { reason },
+  }).then((envelope) => envelope.data);
+}

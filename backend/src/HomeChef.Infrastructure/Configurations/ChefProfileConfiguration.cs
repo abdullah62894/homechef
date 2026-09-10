@@ -46,6 +46,25 @@ public sealed class ChefProfileConfiguration : IEntityTypeConfiguration<ChefProf
             .HasColumnType("text[]")
             .IsRequired();
 
+        builder.Property(p => p.ApprovalStatus)
+            .HasConversion<int>()
+            .HasDefaultValue(ChefApprovalStatus.PendingApproval)
+            .IsRequired();
+
+        builder.Property(p => p.ApprovalAtUtc)
+            .HasColumnType("timestamptz");
+
+        builder.Property(p => p.RejectionReason)
+            .HasMaxLength(500);
+
+        builder.Property(p => p.PhoneNumber)
+            .HasMaxLength(30);
+
+        builder.Property(p => p.WhatsAppNumber)
+            .HasMaxLength(30);
+
+        builder.Property(p => p.DeliveryRadiusKm);
+
         builder.Property(p => p.PhotoUrl)
             .HasMaxLength(500);
 
@@ -64,5 +83,6 @@ public sealed class ChefProfileConfiguration : IEntityTypeConfiguration<ChefProf
         builder.HasIndex(p => p.Area);
         builder.HasIndex(p => new { p.City, p.Area });
         builder.HasIndex(p => new { p.Latitude, p.Longitude });
+        builder.HasIndex(p => p.ApprovalStatus);
     }
 }

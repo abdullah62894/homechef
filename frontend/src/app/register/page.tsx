@@ -36,14 +36,16 @@ function RegisterPageInner() {
 
   return (
     <section className="mx-auto max-w-md px-4 py-16 sm:py-24">
-      <h1 className="text-3xl font-bold tracking-tight">Create your account</h1>
-      <p className="mt-2 text-gray-600">
-        Join HomeChef as a customer, or register as a home chef.
-      </p>
+      <div className="text-center">
+        <h1 className="text-3xl font-bold tracking-tight text-gray-900">Create your account</h1>
+        <p className="mt-2 text-gray-600">
+          Join HomeChef as a customer, or register as a home chef.
+        </p>
+      </div>
 
       <form onSubmit={handleSubmit} className="mt-8 space-y-4">
         {error && (
-          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             {error}
           </div>
         )}
@@ -60,7 +62,7 @@ function RegisterPageInner() {
               required
               value={firstName}
               onChange={(event) => setFirstName(event.target.value)}
-              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 shadow-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+              className="mt-1 block w-full rounded-xl border border-gray-300 px-4 py-3 text-sm shadow-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
             />
           </div>
           <div>
@@ -74,7 +76,7 @@ function RegisterPageInner() {
               required
               value={lastName}
               onChange={(event) => setLastName(event.target.value)}
-              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 shadow-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+              className="mt-1 block w-full rounded-xl border border-gray-300 px-4 py-3 text-sm shadow-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
             />
           </div>
         </div>
@@ -90,7 +92,7 @@ function RegisterPageInner() {
             required
             value={email}
             onChange={(event) => setEmail(event.target.value)}
-            className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 shadow-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+            className="mt-1 block w-full rounded-xl border border-gray-300 px-4 py-3 text-sm shadow-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
           />
         </div>
 
@@ -106,7 +108,7 @@ function RegisterPageInner() {
             minLength={8}
             value={password}
             onChange={(event) => setPassword(event.target.value)}
-            className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 shadow-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+            className="mt-1 block w-full rounded-xl border border-gray-300 px-4 py-3 text-sm shadow-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
           />
           <p className="mt-1 text-xs text-gray-500">At least 8 characters.</p>
         </div>
@@ -119,7 +121,7 @@ function RegisterPageInner() {
             id="role"
             value={role}
             onChange={(event) => setRole(event.target.value as SelfServiceRole)}
-            className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 shadow-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+            className="mt-1 block w-full rounded-xl border border-gray-300 px-4 py-3 text-sm shadow-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
           >
             <option value="Customer">A customer</option>
             <option value="Chef">A home chef</option>
@@ -129,15 +131,15 @@ function RegisterPageInner() {
         <button
           type="submit"
           disabled={submitting}
-          className="w-full rounded-lg bg-gray-900 px-4 py-2 font-medium text-white hover:bg-gray-800 disabled:opacity-50"
+          className="w-full rounded-xl bg-gray-900 px-4 py-3 font-semibold text-white hover:bg-gray-800 disabled:opacity-50 transition"
         >
           {submitting ? "Creating account…" : "Create account"}
         </button>
       </form>
 
-      <p className="mt-6 text-sm text-gray-600">
+      <p className="mt-6 text-center text-sm text-gray-600">
         Already have an account?{" "}
-        <Link href="/login" className="font-medium text-gray-900 underline">
+        <Link href="/login" className="font-semibold text-gray-900 underline">
           Sign in
         </Link>
       </p>

@@ -58,11 +58,34 @@ export default function AreaPage({ params }: { params: Promise<{ city: string; a
       </div>
 
       {loading && !data ? (
-        <div className="p-8 text-center text-gray-500">Loading chefs...</div>
+        <div className="py-12">
+          <div className="animate-pulse space-y-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="border border-gray-200 rounded-xl p-6 bg-white">
+                <div className="h-5 w-48 rounded bg-gray-200 mb-3" />
+                <div className="h-4 w-32 rounded bg-gray-200 mb-4" />
+                <div className="h-3 w-full rounded bg-gray-200" />
+              </div>
+            ))}
+          </div>
+        </div>
       ) : error ? (
-        <div className="p-8 text-center text-red-500">{error}</div>
+        <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-center">
+          <p className="font-medium text-gray-900">{error}</p>
+          <Link href="/locations" className="mt-3 inline-block text-sm text-gray-600 underline hover:text-gray-900">
+            Browse all locations
+          </Link>
+        </div>
       ) : data?.items.length === 0 ? (
-        <div className="p-8 text-center text-gray-500">No chefs found in this area.</div>
+        <div className="rounded-2xl border border-dashed border-gray-300 py-12 text-center">
+          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-orange-100">
+            <span className="text-2xl">👩‍🍳</span>
+          </div>
+          <p className="font-medium text-gray-700">No chefs found in this area</p>
+          <p className="mt-1 text-sm text-gray-500">
+            Check back soon — home chefs are joining every day.
+          </p>
+        </div>
       ) : (
         <>
           <div className="grid grid-cols-1 gap-6 mb-8">

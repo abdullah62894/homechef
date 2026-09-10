@@ -287,4 +287,34 @@ public sealed class AdminService : IAdminService
             CreatedAtUtc = user.CreatedAtUtc,
         };
     }
+
+    public async Task<AdminUserDto> ApproveChefAsync(Guid chefProfileId, CancellationToken cancellationToken = default)
+    {
+        var profile = await _chefProfileRepository.GetByIdAsync(chefProfileId, cancellationToken)
+            ?? throw new BusinessException(ErrorCodes.ChefProfileNotFound, "Chef profile not found.");
+
+        profile.ApprovalStatus = Domain.Chefs.ChefApprovalStatus.Approved;
+        profile.ApprovalAtUtc = DateTime.UtcNow;
+        await _chefProfileRepository.UpdateAsync(profile, cancellationToken);
+
+        var user = await _userManager.FindByIdAsync(profile.UserId.ToString())
+            ?? throw new BusinessException(ErrorCodes.UserNotFound, "User not found.");
+
+        return await GetUserDtoAsync(user, cancellationToken);
+    }
+
+    public async Task<AdminUserDto> RejectChefAsync(Guid chefProfileId, string? reason, CancellationToken cancellationToken = default)
+    {
+        var profile = await _chefProfileRepository.GetByIdAsync(chefProfileId, cancellationToken)
+            ?? throw new BusinessException(ErrorCodes.ChefProfileNotFound, "Chef profile not found.");
+
+        profile.ApprovalStatus = Domain.Chefs.ChefApprovalStatus.Rejected;
+        profile.RejectionReason = reason;
+        await _chefProfileRepository.UpdateAsync(profile, cancellationToken);
+
+        var user = await _userManager.FindByIdAsync(profile.UserId.ToString())
+            ?? throw new BusinessException(ErrorCodes.UserNotFound, "User not found.");
+
+        return await GetUserDtoAsync(user, cancellationToken);
+    }
 }

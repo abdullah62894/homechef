@@ -39,10 +39,10 @@ export default function BecomeAChefPage() {
         <span className="text-gray-900">Become a Home Chef</span>
       </nav>
 
-      <h1 className="mt-4 text-4xl font-bold tracking-tight text-gray-900">
+      <h1 className="mt-6 text-4xl font-bold tracking-tight text-gray-900">
         Turn your kitchen into a food business
       </h1>
-      <p className="mt-3 max-w-xl text-lg text-gray-600">
+      <p className="mt-3 max-w-xl text-lg text-gray-600 leading-relaxed">
         HomeChef gives home cooks, bakers and small food makers a storefront —
         no restaurant, no commission, no setup fee while we grow.
       </p>
@@ -52,7 +52,7 @@ export default function BecomeAChefPage() {
       <ol className="mt-12 space-y-5">
         {STEPS.map((step, i) => (
           <li key={step.title} className="flex gap-4 rounded-2xl border border-gray-200 bg-white p-5 shadow-xs">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-900 text-sm font-bold text-white">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-orange-600 text-sm font-bold text-white">
               {i + 1}
             </span>
             <div>
@@ -63,8 +63,11 @@ export default function BecomeAChefPage() {
         ))}
       </ol>
 
-      <div className="mt-10 rounded-2xl bg-gray-900 p-6 text-center">
+      <div className="mt-10 rounded-2xl bg-gray-900 p-8 text-center">
         <p className="text-lg font-semibold text-white">Ready to cook for your neighborhood?</p>
+        <p className="mt-2 text-sm text-gray-300">
+          Join hundreds of home chefs already earning from their kitchen.
+        </p>
         <BecomeChefCTA variant="light" />
       </div>
     </section>

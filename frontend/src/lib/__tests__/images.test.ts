@@ -21,10 +21,10 @@ describe("validateImageFile", () => {
     expect(validateImageFile(file)).toContain("JPEG, PNG or WebP");
   });
 
-  it("rejects files above 5 MB", () => {
+  it("rejects files above 10 MB", () => {
     const file = new File(["x"], "big.png", { type: "image/png" });
-    Object.defineProperty(file, "size", { value: 6 * 1024 * 1024 });
-    expect(validateImageFile(file)).toContain("5 MB");
+    Object.defineProperty(file, "size", { value: 11 * 1024 * 1024 });
+    expect(validateImageFile(file)).toContain("10 MB");
   });
 });
 
