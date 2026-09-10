@@ -66,4 +66,10 @@ public sealed class ChefProfileDto
     public DateTime CreatedAtUtc { get; set; }
 
     public DateTime UpdatedAtUtc { get; set; }
+
+    public string? PhoneNumber { get; set; }
+
+    public string? WhatsAppNumber { get; set; }
+
+    public double? DeliveryRadiusKm { get; set; }
 }

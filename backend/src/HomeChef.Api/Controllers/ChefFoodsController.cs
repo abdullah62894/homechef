@@ -15,11 +15,13 @@ public sealed class ChefFoodsController : ControllerBase
 {
     private readonly IFoodService _foodService;
     private readonly IImageService _imageService;
+    private readonly ILogger<ChefFoodsController> _logger;
 
-    public ChefFoodsController(IFoodService foodService, IImageService imageService)
+    public ChefFoodsController(IFoodService foodService, IImageService imageService, ILogger<ChefFoodsController> logger)
     {
         _foodService = foodService;
         _imageService = imageService;
+        _logger = logger;
     }
 
     /// <summary>Lists public food/menu items offered by a specific chef.</summary>
@@ -138,11 +140,18 @@ public sealed class ChefFoodsController : ControllerBase
     {
         var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
-        await using var stream = file.OpenReadStream();
-        var image = await _imageService.UploadAsync(stream, file.Length, cancellationToken);
-        var food = await _foodService.SetFoodImageAsync(userId, id, image, cancellationToken);
-
-        return Ok(new ApiResponse<FoodItemDto>(food));
+        try
+        {
+            await using var stream = file.OpenReadStream();
+            var image = await _imageService.UploadAsync(stream, file.Length, cancellationToken);
+            var food = await _foodService.SetFoodImageAsync(userId, id, image, cancellationToken);
+            return Ok(new ApiResponse<FoodItemDto>(food));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to upload food image {FoodId} for user {UserId}", id, userId);
+            throw;
+        }
     }
 
     /// <summary>Removes the image of a food item owned by the calling chef.</summary>

@@ -1,5 +1,6 @@
 import { apiFetch, type ApiEnvelope } from "./api";
 import type { Report } from "./reports";
+import type { Cuisine } from "./cuisines";
 
 export interface AdminUser {
   id: string;
@@ -178,4 +179,35 @@ export function rejectChef(chefProfileId: string, reason?: string): Promise<Admi
     method: "POST",
     body: { reason },
   }).then((envelope) => envelope.data);
+}
+
+export function uploadCuisineImage(cuisineId: string, file: File): Promise<void> {
+  const formData = new FormData();
+  formData.append("file", file);
+  return fetch(`/api/cuisines/${cuisineId}/image`, {
+    method: "POST",
+    headers: { Accept: "application/json" },
+    credentials: "include",
+    body: formData,
+  }).then((res) => {
+    if (!res.ok) throw new Error(`Upload failed (${res.status})`);
+  });
+}
+
+export function createCuisine(input: { name: string; slug: string; description?: string; displayOrder: number }): Promise<Cuisine> {
+  return apiFetch<ApiEnvelope<Cuisine>>("/api/cuisines", {
+    method: "POST",
+    body: input,
+  }).then((envelope) => envelope.data);
+}
+
+export function updateCuisine(id: string, input: { name: string; slug: string; description?: string; displayOrder: number; isActive: boolean }): Promise<Cuisine> {
+  return apiFetch<ApiEnvelope<Cuisine>>(`/api/cuisines/${id}`, {
+    method: "PUT",
+    body: input,
+  }).then((envelope) => envelope.data);
+}
+
+export function deleteCuisine(id: string): Promise<void> {
+  return apiFetch<void>(`/api/cuisines/${id}`, { method: "DELETE" });
 }

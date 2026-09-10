@@ -13,9 +13,15 @@ namespace HomeChef.Api.Controllers;
 public sealed class ChefAvailabilityController : ControllerBase
 {
     private readonly IChefAvailabilityRepository _availabilityRepository;
+    private readonly IChefProfileRepository _chefProfileRepository;
 
-    public ChefAvailabilityController(IChefAvailabilityRepository availabilityRepository)
-        => _availabilityRepository = availabilityRepository;
+    public ChefAvailabilityController(
+        IChefAvailabilityRepository availabilityRepository,
+        IChefProfileRepository chefProfileRepository)
+    {
+        _availabilityRepository = availabilityRepository;
+        _chefProfileRepository = chefProfileRepository;
+    }
 
     [HttpGet("me")]
     [Authorize(Policy = Policies.RequireChef)]
@@ -23,8 +29,10 @@ public sealed class ChefAvailabilityController : ControllerBase
     public async Task<IActionResult> GetMyAvailability(CancellationToken cancellationToken)
     {
         var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var profile = await _chefProfileRepository.GetByUserIdAsync(userId, cancellationToken);
+        if (profile is null) return NotFound();
         return Ok(new ApiResponse<IReadOnlyList<ChefAvailability>>(
-            await _availabilityRepository.ListByChefAsync(userId, cancellationToken)));
+            await _availabilityRepository.ListByChefAsync(profile.Id, cancellationToken)));
     }
 
     [HttpGet("{chefId:guid}")]
@@ -43,6 +51,8 @@ public sealed class ChefAvailabilityController : ControllerBase
         [FromBody] UpdateAvailabilityRequest request, CancellationToken cancellationToken)
     {
         var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var profile = await _chefProfileRepository.GetByUserIdAsync(userId, cancellationToken);
+        if (profile is null) return NotFound();
 
         var windows = request.Windows.Select(w => new ChefAvailability
         {
@@ -53,7 +63,7 @@ public sealed class ChefAvailabilityController : ControllerBase
             IsActive = w.IsActive,
         }).ToList();
 
-        await _availabilityRepository.ReplaceAllAsync(userId, windows, cancellationToken);
+        await _availabilityRepository.ReplaceAllAsync(profile.Id, windows, cancellationToken);
         return NoContent();
     }
 }

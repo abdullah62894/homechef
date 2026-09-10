@@ -130,6 +130,9 @@ public sealed class ChefService : IChefService
         profile.Latitude = request.Latitude;
         profile.Longitude = request.Longitude;
         profile.Cuisines = NormalizeCuisines(request.Cuisines);
+        profile.PhoneNumber = string.IsNullOrWhiteSpace(request.PhoneNumber) ? null : request.PhoneNumber.Trim();
+        profile.WhatsAppNumber = string.IsNullOrWhiteSpace(request.WhatsAppNumber) ? null : request.WhatsAppNumber.Trim();
+        profile.DeliveryRadiusKm = request.DeliveryRadiusKm;
         profile.UpdatedAtUtc = DateTime.UtcNow;
 
         await _repository.UpdateAsync(profile, cancellationToken);
@@ -228,6 +231,9 @@ public sealed class ChefService : IChefService
             PhotoThumbnailUrl = profile.PhotoThumbnailUrl,
             CreatedAtUtc = profile.CreatedAtUtc,
             UpdatedAtUtc = profile.UpdatedAtUtc,
+            PhoneNumber = profile.PhoneNumber,
+            WhatsAppNumber = profile.WhatsAppNumber,
+            DeliveryRadiusKm = profile.DeliveryRadiusKm,
         };
     }
 }

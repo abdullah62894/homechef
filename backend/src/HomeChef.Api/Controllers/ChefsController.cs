@@ -15,14 +15,15 @@ public sealed class ChefsController : ControllerBase
 {
     private readonly IChefService _chefService;
     private readonly IImageService _imageService;
+    private readonly ILogger<ChefsController> _logger;
 
-    public ChefsController(IChefService chefService, IImageService imageService)
+    public ChefsController(IChefService chefService, IImageService imageService, ILogger<ChefsController> logger)
     {
         _chefService = chefService;
         _imageService = imageService;
+        _logger = logger;
     }
 
-    /// <summary>Lists public chef profiles (paginated, filterable).</summary>
     [HttpGet]
     [AllowAnonymous]
     [ProducesResponseType(typeof(ApiResponse<IReadOnlyList<ChefListItemDto>>), StatusCodes.Status200OK)]
@@ -56,7 +57,6 @@ public sealed class ChefsController : ControllerBase
             new { result.Page, result.PageSize, result.Total, result.HasMore }));
     }
 
-    /// <summary>Returns a public chef profile.</summary>
     [HttpGet("{id:guid}")]
     [AllowAnonymous]
     [ProducesResponseType(typeof(ApiResponse<ChefProfileDto>), StatusCodes.Status200OK)]
@@ -66,7 +66,6 @@ public sealed class ChefsController : ControllerBase
         return Ok(new ApiResponse<ChefProfileDto>(await _chefService.GetByIdAsync(id, cancellationToken)));
     }
 
-    /// <summary>Returns the calling chef's own profile.</summary>
     [HttpGet("me")]
     [Authorize(Policy = Policies.RequireChef)]
     [ProducesResponseType(typeof(ApiResponse<ChefProfileDto>), StatusCodes.Status200OK)]
@@ -74,11 +73,9 @@ public sealed class ChefsController : ControllerBase
     public async Task<IActionResult> GetMe(CancellationToken cancellationToken)
     {
         var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-
         return Ok(new ApiResponse<ChefProfileDto>(await _chefService.GetMyProfileAsync(userId, cancellationToken)));
     }
 
-    /// <summary>Creates the calling chef's profile.</summary>
     [HttpPost("me")]
     [Authorize(Policy = Policies.RequireChef)]
     [ProducesResponseType(typeof(ApiResponse<ChefProfileDto>), StatusCodes.Status201Created)]
@@ -88,13 +85,10 @@ public sealed class ChefsController : ControllerBase
         CancellationToken cancellationToken)
     {
         var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-
         var profile = await _chefService.CreateAsync(userId, request, cancellationToken);
-
         return Created(string.Empty, new ApiResponse<ChefProfileDto>(profile));
     }
 
-    /// <summary>Updates the calling chef's profile.</summary>
     [HttpPut("me")]
     [Authorize(Policy = Policies.RequireChef)]
     [ProducesResponseType(typeof(ApiResponse<ChefProfileDto>), StatusCodes.Status200OK)]
@@ -104,11 +98,9 @@ public sealed class ChefsController : ControllerBase
         CancellationToken cancellationToken)
     {
         var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-
         return Ok(new ApiResponse<ChefProfileDto>(await _chefService.UpdateAsync(userId, request, cancellationToken)));
     }
 
-    /// <summary>Uploads and sets the calling chef's profile photo (multipart/form-data, field "file").</summary>
     [HttpPost("me/photo")]
     [Authorize(Policy = Policies.RequireChef)]
     [ProducesResponseType(typeof(ApiResponse<ChefProfileDto>), StatusCodes.Status200OK)]
@@ -120,14 +112,20 @@ public sealed class ChefsController : ControllerBase
     {
         var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
-        await using var stream = file.OpenReadStream();
-        var image = await _imageService.UploadAsync(stream, file.Length, cancellationToken);
-        var profile = await _chefService.SetMyPhotoAsync(userId, image, cancellationToken);
-
-        return Ok(new ApiResponse<ChefProfileDto>(profile));
+        try
+        {
+            await using var stream = file.OpenReadStream();
+            var image = await _imageService.UploadAsync(stream, file.Length, cancellationToken);
+            var profile = await _chefService.SetMyPhotoAsync(userId, image, cancellationToken);
+            return Ok(new ApiResponse<ChefProfileDto>(profile));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to upload chef photo for user {UserId}", userId);
+            throw;
+        }
     }
 
-    /// <summary>Removes the calling chef's profile photo.</summary>
     [HttpDelete("me/photo")]
     [Authorize(Policy = Policies.RequireChef)]
     [ProducesResponseType(typeof(ApiResponse<ChefProfileDto>), StatusCodes.Status200OK)]

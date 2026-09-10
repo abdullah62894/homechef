@@ -12,7 +12,7 @@ import {
 import { uploadChefPhoto, clearChefPhoto, resolveImageUrl, validateImageFile } from "@/lib/images";
 import { ApiError } from "@/lib/api";
 
-const emptyForm = { displayName: "", bio: "", city: "", area: "", address: "", latitude: "", longitude: "", cuisines: "" };
+const emptyForm = { displayName: "", bio: "", city: "", area: "", address: "", latitude: "", longitude: "", cuisines: "", phoneNumber: "", whatsAppNumber: "", deliveryRadiusKm: "" };
 
 export default function ChefProfileMePage() {
   const router = useRouter();
@@ -41,6 +41,9 @@ export default function ChefProfileMePage() {
           latitude: profile.latitude != null ? String(profile.latitude) : "",
           longitude: profile.longitude != null ? String(profile.longitude) : "",
           cuisines: profile.cuisines.join(", "),
+          phoneNumber: profile.phoneNumber ?? "",
+          whatsAppNumber: profile.whatsAppNumber ?? "",
+          deliveryRadiusKm: profile.deliveryRadiusKm != null ? String(profile.deliveryRadiusKm) : "",
         });
       })
       .catch((err: unknown) => {
@@ -122,6 +125,9 @@ export default function ChefProfileMePage() {
         .split(",")
         .map((c) => c.trim())
         .filter(Boolean),
+      phoneNumber: form.phoneNumber.trim() || null,
+      whatsAppNumber: form.whatsAppNumber.trim() || null,
+      deliveryRadiusKm: form.deliveryRadiusKm.trim() ? parseFloat(form.deliveryRadiusKm.trim()) : null,
     };
 
     try {
@@ -352,6 +358,54 @@ export default function ChefProfileMePage() {
               className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 shadow-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
             />
           </div>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700">
+              Phone Number (optional)
+            </label>
+            <input
+              id="phoneNumber"
+              type="tel"
+              value={form.phoneNumber}
+              onChange={(event) => update("phoneNumber", event.target.value)}
+              placeholder="e.g. 03001234567"
+              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 shadow-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+            />
+          </div>
+          <div>
+            <label htmlFor="whatsAppNumber" className="block text-sm font-medium text-gray-700">
+              WhatsApp Number (optional)
+            </label>
+            <input
+              id="whatsAppNumber"
+              type="tel"
+              value={form.whatsAppNumber}
+              onChange={(event) => update("whatsAppNumber", event.target.value)}
+              placeholder="e.g. 923001234567"
+              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 shadow-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+            />
+            <p className="mt-1 text-xs text-gray-500">Include country code for WhatsApp orders.</p>
+          </div>
+        </div>
+
+        <div>
+          <label htmlFor="deliveryRadiusKm" className="block text-sm font-medium text-gray-700">
+            Delivery Radius (optional)
+          </label>
+          <input
+            id="deliveryRadiusKm"
+            type="number"
+            step="any"
+            min="1"
+            max="100"
+            value={form.deliveryRadiusKm}
+            onChange={(event) => update("deliveryRadiusKm", event.target.value)}
+            placeholder="e.g. 5"
+            className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 shadow-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+          />
+          <p className="mt-1 text-xs text-gray-500">Maximum delivery distance in km.</p>
         </div>
 
         <div>

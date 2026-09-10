@@ -18,6 +18,10 @@ import {
   deleteAdminUser,
   approveChef,
   rejectChef,
+  uploadCuisineImage,
+  createCuisine,
+  updateCuisine,
+  deleteCuisine,
   type AdminUser,
   type AdminReview,
 } from "@/lib/admin";
@@ -26,6 +30,7 @@ import { ApiError } from "@/lib/api";
 import { chefHref } from "@/lib/slugs";
 import { listAllCuisines, type Cuisine } from "@/lib/cuisines";
 import { listContactMessages, type ContactMessage } from "@/lib/contact";
+import { resolveImageUrl } from "@/lib/images";
 
 type AdminTab = "users" | "reports" | "reviews" | "cuisines" | "messages";
 
@@ -73,6 +78,11 @@ export default function AdminConsolePage() {
   const [editForm, setEditForm] = useState(emptyEditForm);
   const [passwordForm, setPasswordForm] = useState("");
   const [modalSubmitting, setModalSubmitting] = useState(false);
+
+  const [cuisineModal, setCuisineModal] = useState<{ mode: "closed" } | { mode: "create" } | { mode: "edit"; cuisine: Cuisine }>({ mode: "closed" });
+  const [cuisineForm, setCuisineForm] = useState({ name: "", slug: "", description: "", displayOrder: 0, isActive: true });
+  const [cuisineSubmitting, setCuisineSubmitting] = useState(false);
+  const [cuisineImageBusy, setCuisineImageBusy] = useState<string | null>(null);
 
   const loadUsers = useCallback(async () => {
     const page = await listAdminUsers(userSearch, roleFilter || undefined, 1, 50);
@@ -679,20 +689,66 @@ export default function AdminConsolePage() {
       {/* Cuisines Tab */}
       {activeTab === "cuisines" && (
         <div className="mt-6">
-          <h2 className="text-xl font-bold tracking-tight">Cuisines</h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-bold tracking-tight">Cuisines</h2>
+            <button
+              type="button"
+              onClick={() => { setCuisineForm({ name: "", slug: "", description: "", displayOrder: cuisines.length, isActive: true }); setCuisineModal({ mode: "create" }); }}
+              className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800"
+            >
+              + Add cuisine
+            </button>
+          </div>
           {loadingCuisines ? (
             <p className="mt-4 text-sm text-gray-500">Loading cuisines…</p>
           ) : (
-            <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+            <div className="mt-4 space-y-3">
               {cuisines.map((cuisine) => (
-                <div key={cuisine.id} className="rounded-xl border border-gray-200 bg-white p-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-semibold text-gray-900">{cuisine.name}</h3>
-                    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${cuisine.isActive ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}`}>
-                      {cuisine.isActive ? "Active" : "Inactive"}
-                    </span>
+                <div key={cuisine.id} className="flex items-center gap-4 rounded-xl border border-gray-200 bg-white p-4">
+                  {resolveImageUrl(cuisine.imageThumbnailUrl ?? cuisine.imageUrl) ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={resolveImageUrl(cuisine.imageThumbnailUrl ?? cuisine.imageUrl)!} alt={cuisine.name} className="h-14 w-14 rounded-lg object-cover" />
+                  ) : (
+                    <div className="flex h-14 w-14 items-center justify-center rounded-lg border border-dashed border-gray-300 bg-gray-50 text-lg">🍽️</div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-sm font-semibold text-gray-900">{cuisine.name}</h3>
+                      <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${cuisine.isActive ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}`}>
+                        {cuisine.isActive ? "Active" : "Inactive"}
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-500">#{cuisine.slug} · Order: {cuisine.displayOrder}</p>
+                    {cuisine.description && <p className="text-xs text-gray-400 mt-0.5 truncate">{cuisine.description}</p>}
                   </div>
-                  <p className="mt-1 text-xs text-gray-500">#{cuisine.slug}</p>
+                  <div className="flex items-center gap-2">
+                    <label className={`cursor-pointer rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 ${cuisineImageBusy === cuisine.id ? "pointer-events-none opacity-50" : ""}`}>
+                      {cuisineImageBusy === cuisine.id ? "Uploading…" : "Upload image"}
+                      <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        e.target.value = "";
+                        if (!file) return;
+                        setCuisineImageBusy(cuisine.id);
+                        try {
+                          await uploadCuisineImage(cuisine.id, file);
+                          const updated = await listAllCuisines();
+                          setCuisines(updated);
+                        } catch (err) {
+                          setError(err instanceof Error ? err.message : "Image upload failed.");
+                        } finally {
+                          setCuisineImageBusy(null);
+                        }
+                      }} />
+                    </label>
+                    <button type="button" onClick={() => {
+                      setCuisineForm({ name: cuisine.name, slug: cuisine.slug, description: cuisine.description ?? "", displayOrder: cuisine.displayOrder, isActive: cuisine.isActive });
+                      setCuisineModal({ mode: "edit", cuisine });
+                    }} className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50">Edit</button>
+                    <button type="button" onClick={async () => {
+                      if (!window.confirm(`Delete cuisine "${cuisine.name}"?`)) return;
+                      await runAction(cuisine.id, async () => { await deleteCuisine(cuisine.id); setCuisines(prev => prev.filter(c => c.id !== cuisine.id)); }, `"${cuisine.name}" was deleted.`);
+                    }} disabled={busyId === cuisine.id} className="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 disabled:opacity-50">Delete</button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -916,6 +972,77 @@ export default function AdminConsolePage() {
                 </form>
               </>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Cuisine modal */}
+      {cuisineModal.mode !== "closed" && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+            <h2 className="text-lg font-bold text-gray-900">
+              {cuisineModal.mode === "create" ? "Add cuisine" : "Edit cuisine"}
+            </h2>
+            <form onSubmit={async (e) => {
+              e.preventDefault();
+              setCuisineSubmitting(true);
+              setError(null);
+              try {
+                if (cuisineModal.mode === "create") {
+                  const created = await createCuisine(cuisineForm);
+                  setCuisines(prev => [...prev, created].sort((a, b) => a.displayOrder - b.displayOrder));
+                  setSuccess(`"${cuisineForm.name}" was created.`);
+                } else {
+                  const updated = await updateCuisine(cuisineModal.cuisine.id, cuisineForm);
+                  setCuisines(prev => prev.map(c => c.id === updated.id ? updated : c));
+                  setSuccess(`"${cuisineForm.name}" was updated.`);
+                }
+                setCuisineModal({ mode: "closed" });
+              } catch (err) {
+                setError(err instanceof ApiError ? err.message : "Failed to save cuisine.");
+              } finally {
+                setCuisineSubmitting(false);
+              }
+            }} className="mt-4 space-y-3">
+              <div>
+                <label className="block text-xs font-semibold uppercase text-gray-700">Name *</label>
+                <input type="text" required value={cuisineForm.name} onChange={(e) => setCuisineForm({ ...cuisineForm, name: e.target.value })}
+                  className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold uppercase text-gray-700">Slug *</label>
+                <input type="text" required value={cuisineForm.slug} onChange={(e) => setCuisineForm({ ...cuisineForm, slug: e.target.value })}
+                  placeholder="e.g. pakistani"
+                  className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold uppercase text-gray-700">Description</label>
+                <textarea rows={2} value={cuisineForm.description} onChange={(e) => setCuisineForm({ ...cuisineForm, description: e.target.value })}
+                  className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold uppercase text-gray-700">Display order</label>
+                  <input type="number" value={cuisineForm.displayOrder} onChange={(e) => setCuisineForm({ ...cuisineForm, displayOrder: parseInt(e.target.value) || 0 })}
+                    className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none" />
+                </div>
+                <div className="flex items-end">
+                  <label className="flex items-center gap-2 text-sm text-gray-700">
+                    <input type="checkbox" checked={cuisineForm.isActive} onChange={(e) => setCuisineForm({ ...cuisineForm, isActive: e.target.checked })}
+                      className="rounded border-gray-300" />
+                    Active
+                  </label>
+                </div>
+              </div>
+              <div className="mt-4 flex justify-end gap-3 border-t pt-4">
+                <button type="button" onClick={() => setCuisineModal({ mode: "closed" })}
+                  className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
+                <button type="submit" disabled={cuisineSubmitting}
+                  className="rounded-lg bg-gray-900 px-5 py-2 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50">
+                  {cuisineSubmitting ? "Saving…" : "Save"}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

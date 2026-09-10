@@ -30,4 +30,13 @@ public sealed class UpdateChefProfileRequest
 
     /// <summary>Cuisine tags. Cleaned and limited to 10 by the service.</summary>
     public string[]? Cuisines { get; set; }
+
+    [StringLength(20, ErrorMessage = "Phone must be at most 20 characters.")]
+    public string? PhoneNumber { get; set; }
+
+    [StringLength(20, ErrorMessage = "WhatsApp must be at most 20 characters.")]
+    public string? WhatsAppNumber { get; set; }
+
+    [Range(1.0, 100.0, ErrorMessage = "Delivery radius must be between 1 and 100 km.")]
+    public double? DeliveryRadiusKm { get; set; }
 }

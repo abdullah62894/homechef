@@ -16,6 +16,9 @@ export interface ChefListItem {
   ratingAverage: number | null;
   ratingCount: number;
   startingPrice: number | null;
+  phoneNumber: string | null;
+  whatsAppNumber: string | null;
+  deliveryRadiusKm: number | null;
 }
 
 export interface ChefProfile extends ChefListItem {
@@ -33,6 +36,9 @@ export interface ChefProfileInput {
   latitude?: number | null;
   longitude?: number | null;
   cuisines?: string[];
+  phoneNumber?: string | null;
+  whatsAppNumber?: string | null;
+  deliveryRadiusKm?: number | null;
 }
 
 export interface ChefListPage {
