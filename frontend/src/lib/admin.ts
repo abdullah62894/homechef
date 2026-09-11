@@ -1,5 +1,4 @@
-import { apiFetch, type ApiEnvelope } from "./api";
-import { API_BASE_URL } from "./api/config";
+import { apiFetch, apiUpload, type ApiEnvelope } from "./api";
 import type { Report } from "./reports";
 import type { Cuisine } from "./cuisines";
 
@@ -184,16 +183,7 @@ export function rejectChef(chefProfileId: string, reason?: string): Promise<Admi
 }
 
 export function uploadCuisineImage(cuisineId: string, file: File): Promise<void> {
-  const formData = new FormData();
-  formData.append("file", file);
-  return fetch(`${API_BASE_URL}/api/cuisines/${cuisineId}/image`, {
-    method: "POST",
-    headers: { Accept: "application/json" },
-    credentials: "include",
-    body: formData,
-  }).then((res) => {
-    if (!res.ok) throw new Error(`Upload failed (${res.status})`);
-  });
+  return apiUpload(`/api/cuisines/${cuisineId}/image`, file).then(() => undefined);
 }
 
 export function createCuisine(input: { name: string; slug: string; description?: string; displayOrder: number }): Promise<Cuisine> {

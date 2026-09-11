@@ -84,7 +84,7 @@ export default function CheckoutPage() {
     });
   }, [itemsByChef]);
 
-  if (items.length === 0) {
+  if (items.length === 0 && !whatsappLinks) {
     return (
       <div className="mx-auto max-w-3xl px-4 py-16 text-center">
         <h1 className="text-2xl font-bold text-gray-900">Checkout</h1>
@@ -129,7 +129,6 @@ export default function CheckoutPage() {
     }
 
     setWhatsappLinks(links);
-    clearCart();
   }
 
   if (whatsappLinks) {
@@ -148,6 +147,7 @@ export default function CheckoutPage() {
               href={link.url}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => clearCart()}
               className="block w-full rounded-xl bg-green-500 px-6 py-4 text-base font-semibold text-white shadow hover:bg-green-600 transition"
             >
               Order from {link.chefName} via WhatsApp
