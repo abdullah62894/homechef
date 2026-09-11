@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using HomeChef.Domain.Chefs;
 using HomeChef.Domain.Identity;
 
@@ -13,10 +14,12 @@ public class Order
 
     public Guid CustomerUserId { get; set; }
 
+    [JsonIgnore]
     public ApplicationUser CustomerUser { get; set; } = null!;
 
     public Guid ChefProfileId { get; set; }
 
+    [JsonIgnore]
     public ChefProfile ChefProfile { get; set; } = null!;
 
     public decimal Subtotal { get; set; }

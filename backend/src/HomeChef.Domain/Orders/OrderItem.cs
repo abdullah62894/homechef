@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using HomeChef.Domain.Foods;
 
 namespace HomeChef.Domain.Orders;
@@ -11,10 +12,12 @@ public class OrderItem
 
     public Guid OrderId { get; set; }
 
+    [JsonIgnore]
     public Order Order { get; set; } = null!;
 
     public Guid FoodItemId { get; set; }
 
+    [JsonIgnore]
     public FoodItem FoodItem { get; set; } = null!;
 
     /// <summary>Dish name at time of order.</summary>

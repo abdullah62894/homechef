@@ -14,6 +14,8 @@ public sealed record FoodQueryFilter
 
     public string? Cuisine { get; init; }
 
+    public Guid? CuisineId { get; init; }
+
     public double? Lat { get; init; }
 
     public double? Lng { get; init; }

@@ -26,7 +26,7 @@ export default function CuisineDetailPage() {
         if (cancelled) return;
         setCuisine(cuisineResult);
 
-        const foodResult = await listFoods({ cuisine: cuisineResult.name }, 1, 50);
+        const foodResult = await listFoods({ cuisineId: id }, 1, 50);
         if (!cancelled) {
           setFoods(foodResult.items);
         }

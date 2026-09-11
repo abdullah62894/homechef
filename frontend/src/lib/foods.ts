@@ -64,6 +64,7 @@ export interface FoodFilterOptions {
   city?: string;
   area?: string;
   cuisine?: string;
+  cuisineId?: string;
   lat?: number;
   lng?: number;
   radiusKm?: number;
@@ -98,6 +99,7 @@ export function listFoods(
   if (filter.city) params.set("city", filter.city);
   if (filter.area) params.set("area", filter.area);
   if (filter.cuisine) params.set("cuisine", filter.cuisine);
+  if (filter.cuisineId) params.set("cuisineId", filter.cuisineId);
   if (filter.lat !== undefined) params.set("lat", filter.lat.toString());
   if (filter.lng !== undefined) params.set("lng", filter.lng.toString());
   if (filter.radiusKm !== undefined) params.set("radiusKm", filter.radiusKm.toString());

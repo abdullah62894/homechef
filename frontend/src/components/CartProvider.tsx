@@ -53,14 +53,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const addItem = useCallback(
     (item: Omit<CartItem, "quantity">, quantity = 1) => {
-      persist(
-        items.reduce<CartItem[]>((acc, existing) => {
-          if (existing.foodItemId === item.foodItemId) {
-            return [...acc, { ...existing, quantity: existing.quantity + quantity }];
-          }
-          return [...acc, existing];
-        }, items.some((i) => i.foodItemId === item.foodItemId) ? [] : [...items, { ...item, quantity }])
-      );
+      const existingIndex = items.findIndex((i) => i.foodItemId === item.foodItemId);
+      if (existingIndex >= 0) {
+        persist(items.map((i, idx) => idx === existingIndex ? { ...i, quantity: i.quantity + quantity } : i));
+      } else {
+        persist([...items, { ...item, quantity }]);
+      }
     },
     [items, persist]
   );

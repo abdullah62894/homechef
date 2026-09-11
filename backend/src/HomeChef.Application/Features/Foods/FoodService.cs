@@ -59,6 +59,7 @@ public sealed class FoodService : IFoodService
             && string.IsNullOrWhiteSpace(filter.City)
             && string.IsNullOrWhiteSpace(filter.Area)
             && string.IsNullOrWhiteSpace(filter.Cuisine)
+            && !filter.CuisineId.HasValue
             && !filter.Lat.HasValue
             && !filter.Lng.HasValue
             && !filter.IsAvailable.HasValue;
@@ -247,6 +248,8 @@ public sealed class FoodService : IFoodService
         food.PreparationTimeMinutes = request.PreparationTimeMinutes;
         food.UpdatedAtUtc = DateTime.UtcNow;
 
+        await _foodRepository.UpdateAsync(food, cancellationToken);
+
         if (request.CuisineIds is not null)
         {
             var validCuisines = await _cuisineRepository.ListAllAsync(cancellationToken);
@@ -254,8 +257,6 @@ public sealed class FoodService : IFoodService
             var filteredIds = request.CuisineIds.Where(id => validIds.Contains(id)).ToList();
             await _foodRepository.ReplaceFoodCuisinesAsync(food.Id, filteredIds, cancellationToken);
         }
-
-        await _foodRepository.UpdateAsync(food, cancellationToken);
 
         var updated = await _foodRepository.GetByIdAsync(food.Id, cancellationToken);
         return ToDto(updated ?? food);

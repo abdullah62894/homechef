@@ -87,6 +87,13 @@ public sealed class FoodRepository : IFoodRepository
                 .ToList();
         }
 
+        if (filter.CuisineId.HasValue)
+        {
+            allMatching = allMatching
+                .Where(f => f.FoodCuisines.Any(fc => fc.CuisineId == filter.CuisineId.Value))
+                .ToList();
+        }
+
         List<FoodWithDistance> withDistance;
 
         if (filter.Lat.HasValue && filter.Lng.HasValue)
