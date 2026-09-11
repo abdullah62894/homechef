@@ -2,7 +2,6 @@
 
 import { listActiveCuisines, type Cuisine } from "@/lib/cuisines";
 import Link from "next/link";
-import Image from "next/image";
 import { resolveImageUrl } from "@/lib/images";
 import { useState, useEffect } from "react";
 
@@ -36,11 +35,11 @@ export default function CuisinesPage() {
           >
             {cuisine.imageThumbnailUrl || cuisine.imageUrl ? (
               <div className="relative aspect-square">
-                <Image
-                  src={resolveImageUrl(cuisine.imageThumbnailUrl || cuisine.imageUrl!) ?? ""}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={resolveImageUrl(cuisine.imageThumbnailUrl ?? cuisine.imageUrl)!}
                   alt={cuisine.name}
-                  fill
-                  className="object-cover"
+                  className="h-full w-full object-cover group-hover:scale-105 transition-transform"
                 />
               </div>
             ) : (

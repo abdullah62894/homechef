@@ -1,6 +1,7 @@
 "use client";
 
 import { getOrder, getWhatsAppUrl, markWhatsAppInitiated, type Order } from "@/lib/orders";
+import { createChefReview } from "@/lib/reviews";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useEffect, use } from "react";
@@ -12,6 +13,12 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
   const [whatsappUrl, setWhatsappUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState("");
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const [reviewMessage, setReviewMessage] = useState<{ ok: boolean; text: string } | null>(null);
+  const [hasReviewed, setHasReviewed] = useState(false);
 
   useEffect(() => {
     getOrder(id)
@@ -31,6 +38,27 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
       alert(err.message || "Failed to generate WhatsApp link.");
     } finally {
       setSending(false);
+    }
+  }
+
+  async function handleReview(e: React.FormEvent) {
+    e.preventDefault();
+    if (!order) return;
+    setReviewSubmitting(true);
+    setReviewMessage(null);
+    try {
+      await createChefReview(order.chefProfileId, {
+        rating: reviewRating,
+        comment: reviewComment.trim(),
+      });
+      setReviewMessage({ ok: true, text: "Thank you! Your review has been submitted." });
+      setHasReviewed(true);
+      setReviewComment("");
+      setReviewRating(5);
+    } catch (err: any) {
+      setReviewMessage({ ok: false, text: err.message || "Failed to submit review." });
+    } finally {
+      setReviewSubmitting(false);
     }
   }
 
@@ -103,6 +131,60 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
               {sending ? "Generating..." : "Send via WhatsApp"}
             </button>
           )}
+        </div>
+      )}
+
+      {order.status === "Completed" && !hasReviewed && (
+        <div className="mt-6 rounded-lg border border-gray-200 bg-white p-4">
+          <h2 className="text-sm font-semibold text-gray-700">Leave a Review</h2>
+          <form onSubmit={handleReview} className="mt-3 space-y-3">
+            <div>
+              <label className="block text-xs font-medium text-gray-700">Rating</label>
+              <div className="mt-1 flex gap-1">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => setReviewRating(star)}
+                    className={`text-2xl ${star <= reviewRating ? "text-yellow-400" : "text-gray-300"} hover:text-yellow-400 transition-colors`}
+                  >
+                    ★
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-700">Comment</label>
+              <textarea
+                value={reviewComment}
+                onChange={(e) => setReviewComment(e.target.value)}
+                rows={3}
+                minLength={3}
+                maxLength={1000}
+                required
+                placeholder="Tell others about your experience..."
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+              />
+            </div>
+            {reviewMessage && (
+              <p className={`text-sm ${reviewMessage.ok ? "text-green-600" : "text-red-600"}`}>
+                {reviewMessage.text}
+              </p>
+            )}
+            <button
+              type="submit"
+              disabled={reviewSubmitting || reviewComment.trim().length < 3}
+              className="w-full rounded-lg bg-orange-500 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-600 disabled:opacity-50"
+            >
+              {reviewSubmitting ? "Submitting..." : "Submit Review"}
+            </button>
+          </form>
+        </div>
+      )}
+
+      {order.status === "Completed" && hasReviewed && (
+        <div className="mt-6 rounded-lg border border-green-200 bg-green-50 p-4 text-center">
+          <p className="text-sm text-green-700">Thank you! Your review has been submitted.</p>
         </div>
       )}
     </div>

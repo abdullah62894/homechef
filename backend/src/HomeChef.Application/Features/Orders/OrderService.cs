@@ -19,6 +19,7 @@ public interface IOrderService
     Task<IReadOnlyList<Order>> ListOrdersByChefAsync(Guid chefProfileId);
     Task<IReadOnlyList<Order>> ListAllOrdersAsync(int page, int pageSize);
     Task MarkWhatsAppInitiatedAsync(Guid orderId);
+    Task MarkCompletedAsync(Guid orderId, Guid chefUserId);
     string GenerateWhatsAppMessage(Order order, ChefProfile chef, List<OrderItem> items);
     string GenerateWhatsAppUrl(ChefProfile chef, string message);
     Task<List<OrderByChef>> GroupOrderItemsByChefAsync(List<CartInput> cartItems);
@@ -108,6 +109,25 @@ public sealed class OrderService : IOrderService
             ?? throw new BusinessException(ErrorCodes.OrderNotFound, "Order not found.");
         order.Status = OrderStatus.WhatsAppInitiated;
         order.WhatsAppInitiatedAtUtc = DateTime.UtcNow;
+        await _orderRepository.UpdateAsync(order);
+    }
+
+    public async Task MarkCompletedAsync(Guid orderId, Guid chefUserId)
+    {
+        var order = await _orderRepository.GetByIdAsync(orderId)
+            ?? throw new BusinessException(ErrorCodes.OrderNotFound, "Order not found.");
+
+        var chef = await _chefRepository.GetByUserIdAsync(chefUserId)
+            ?? throw new BusinessException(ErrorCodes.ChefProfileNotFound, "Chef profile not found.");
+
+        if (order.ChefProfileId != chef.Id)
+            throw new BusinessException(ErrorCodes.FoodItemForbidden, "You are not authorized to modify this order.");
+
+        if (order.Status == OrderStatus.Completed || order.Status == OrderStatus.Cancelled)
+            throw new BusinessException(ErrorCodes.OrderInvalid, "Order is already finalized.");
+
+        order.Status = OrderStatus.Completed;
+        order.CompletedAtUtc = DateTime.UtcNow;
         await _orderRepository.UpdateAsync(order);
     }
 

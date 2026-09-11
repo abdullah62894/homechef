@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { listChefOrders, getWhatsAppUrl, type Order } from "@/lib/orders";
+import { listChefOrders, getWhatsAppUrl, markOrderCompleted, type Order } from "@/lib/orders";
 import { getMyChefProfile, type ChefProfile } from "@/lib/chefs";
 import { ApiError } from "@/lib/api";
 
@@ -19,6 +19,7 @@ export default function ChefOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [completingId, setCompletingId] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -43,6 +44,23 @@ export default function ChefOrdersPage() {
       window.open(result.url, "_blank");
     } catch (err: any) {
       alert(err.message || "Failed to generate WhatsApp link.");
+    }
+  }
+
+  async function handleComplete(order: Order) {
+    if (!confirm("Mark this order as completed?")) return;
+    setCompletingId(order.id);
+    try {
+      await markOrderCompleted(order.id);
+      setOrders((prev) =>
+        prev.map((o) =>
+          o.id === order.id ? { ...o, status: "Completed" as const } : o
+        )
+      );
+    } catch (err: any) {
+      alert(err.message || "Failed to mark order as completed.");
+    } finally {
+      setCompletingId(null);
     }
   }
 
@@ -94,13 +112,22 @@ export default function ChefOrdersPage() {
                 </div>
               </div>
 
-              {order.status === "Pending" && (
+              {(order.status === "Pending" || order.status === "WhatsAppInitiated") && (
                 <div className="mt-3 flex gap-2">
+                  {order.status === "Pending" && (
+                    <button
+                      onClick={() => handleWhatsApp(order)}
+                      className="flex-1 rounded-lg bg-green-500 px-4 py-2 text-sm font-semibold text-white hover:bg-green-600"
+                    >
+                      Send via WhatsApp
+                    </button>
+                  )}
                   <button
-                    onClick={() => handleWhatsApp(order)}
-                    className="flex-1 rounded-lg bg-green-500 px-4 py-2 text-sm font-semibold text-white hover:bg-green-600"
+                    onClick={() => handleComplete(order)}
+                    disabled={completingId === order.id}
+                    className="flex-1 rounded-lg bg-blue-500 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-600 disabled:opacity-50"
                   >
-                    Send via WhatsApp
+                    {completingId === order.id ? "Marking..." : "Mark Completed"}
                   </button>
                 </div>
               )}

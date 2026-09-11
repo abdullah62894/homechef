@@ -85,6 +85,16 @@ public sealed class OrdersController : ControllerBase
         return NoContent();
     }
 
+    [HttpPost("{id:guid}/complete")]
+    [Authorize(Policy = Policies.RequireChef)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> MarkCompleted(Guid id, CancellationToken cancellationToken)
+    {
+        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        await _orderService.MarkCompletedAsync(id, userId);
+        return NoContent();
+    }
+
     [HttpGet("{id:guid}/whatsapp")]
     [Authorize]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]

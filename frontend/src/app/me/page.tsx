@@ -27,9 +27,11 @@ import {
 import { getMyChefProfile, type ChefProfile } from "@/lib/chefs";
 import { chefHref } from "@/lib/slugs";
 import { ApiError } from "@/lib/api";
+import { useCart } from "@/components/CartProvider";
 
 export default function MePage() {
   const router = useRouter();
+  const { clearCart } = useCart();
   const [user, setUser] = useState<UserDto | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -144,6 +146,7 @@ export default function MePage() {
 
   async function handleLogout() {
     await logoutUser();
+    clearCart();
     router.push("/");
   }
 

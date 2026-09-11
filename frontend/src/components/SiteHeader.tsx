@@ -12,7 +12,7 @@ export default function SiteHeader() {
   const [user, setUser] = useState<UserDto | null>(null);
   const [checked, setChecked] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { totalItems } = useCart();
+  const { totalItems, clearCart } = useCart();
 
   useEffect(() => {
     let cancelled = false;
@@ -33,6 +33,7 @@ export default function SiteHeader() {
 
   async function handleSignOut() {
     await logoutUser();
+    clearCart();
     setUser(null);
     setMobileMenuOpen(false);
     router.push("/");

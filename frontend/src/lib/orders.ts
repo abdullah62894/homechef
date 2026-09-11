@@ -78,6 +78,10 @@ export function markWhatsAppInitiated(id: string): Promise<void> {
   return apiFetch<void>(`/api/orders/${id}/whatsapp-initiated`, { method: "POST" });
 }
 
+export function markOrderCompleted(id: string): Promise<void> {
+  return apiFetch<void>(`/api/orders/${id}/complete`, { method: "POST" });
+}
+
 export function getWhatsAppUrl(id: string): Promise<{ url: string; message: string }> {
   return apiFetch<ApiEnvelope<{ url: string; message: string }>>(`/api/orders/${id}/whatsapp`).then(unwrap);
 }
