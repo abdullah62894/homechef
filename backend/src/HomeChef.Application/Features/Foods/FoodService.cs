@@ -2,8 +2,10 @@ using HomeChef.Application.Common;
 using HomeChef.Application.Common.Errors;
 using HomeChef.Application.Common.Exceptions;
 using HomeChef.Application.Features.Chefs;
+using HomeChef.Application.Features.Cuisines;
 using HomeChef.Application.Features.Foods.Contracts;
 using HomeChef.Application.Features.Images.Contracts;
+using HomeChef.Domain.Cuisines;
 using HomeChef.Domain.Foods;
 using Microsoft.Extensions.Caching.Memory;
 
@@ -20,6 +22,7 @@ public sealed class FoodService : IFoodService
     private readonly IFoodCategoryRepository _categoryRepository;
     private readonly IChefProfileRepository _chefProfileRepository;
     private readonly IFoodAvailabilityRepository _availabilityRepository;
+    private readonly ICuisineRepository _cuisineRepository;
     private readonly IMemoryCache _cache;
 
     public FoodService(
@@ -27,12 +30,14 @@ public sealed class FoodService : IFoodService
         IFoodCategoryRepository categoryRepository,
         IChefProfileRepository chefProfileRepository,
         IFoodAvailabilityRepository availabilityRepository,
+        ICuisineRepository cuisineRepository,
         IMemoryCache cache)
     {
         _foodRepository = foodRepository;
         _categoryRepository = categoryRepository;
         _chefProfileRepository = chefProfileRepository;
         _availabilityRepository = availabilityRepository;
+        _cuisineRepository = cuisineRepository;
         _cache = cache;
     }
 
@@ -190,6 +195,16 @@ public sealed class FoodService : IFoodService
             UpdatedAtUtc = now,
         };
 
+        if (request.CuisineIds is { Count: > 0 })
+        {
+            var validCuisines = await _cuisineRepository.ListAllAsync(cancellationToken);
+            var validIds = validCuisines.Select(c => c.Id).ToHashSet();
+            foreach (var cuisineId in request.CuisineIds.Where(id => validIds.Contains(id)))
+            {
+                food.FoodCuisines.Add(new FoodCuisine { FoodItemId = food.Id, CuisineId = cuisineId });
+            }
+        }
+
         await _foodRepository.AddAsync(food, cancellationToken);
 
         var created = await _foodRepository.GetByIdAsync(food.Id, cancellationToken);
@@ -231,6 +246,14 @@ public sealed class FoodService : IFoodService
         food.ImageUrl = string.IsNullOrWhiteSpace(request.ImageUrl) ? null : request.ImageUrl.Trim();
         food.PreparationTimeMinutes = request.PreparationTimeMinutes;
         food.UpdatedAtUtc = DateTime.UtcNow;
+
+        if (request.CuisineIds is not null)
+        {
+            var validCuisines = await _cuisineRepository.ListAllAsync(cancellationToken);
+            var validIds = validCuisines.Select(c => c.Id).ToHashSet();
+            var filteredIds = request.CuisineIds.Where(id => validIds.Contains(id)).ToList();
+            await _foodRepository.ReplaceFoodCuisinesAsync(food.Id, filteredIds, cancellationToken);
+        }
 
         await _foodRepository.UpdateAsync(food, cancellationToken);
 
@@ -344,6 +367,8 @@ public sealed class FoodService : IFoodService
             DistanceKm = distanceKm,
             CategoryId = food.CategoryId,
             CategoryName = food.Category?.Name,
+            CuisineNames = food.FoodCuisines?.Select(fc => fc.Cuisine?.Name ?? "").Where(n => !string.IsNullOrEmpty(n)).ToList() ?? [],
+            CuisineIds = food.FoodCuisines?.Select(fc => fc.CuisineId).ToList() ?? [],
             Name = food.Name,
             Description = food.Description,
             Price = food.Price,
@@ -370,6 +395,8 @@ public sealed class FoodService : IFoodService
             DistanceKm = distanceKm,
             CategoryId = food.CategoryId,
             CategoryName = food.Category?.Name,
+            CuisineNames = food.FoodCuisines?.Select(fc => fc.Cuisine?.Name ?? "").Where(n => !string.IsNullOrEmpty(n)).ToList() ?? [],
+            CuisineIds = food.FoodCuisines?.Select(fc => fc.CuisineId).ToList() ?? [],
             Name = food.Name,
             Description = food.Description,
             Price = food.Price,

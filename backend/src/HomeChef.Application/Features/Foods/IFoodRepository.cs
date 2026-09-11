@@ -27,4 +27,6 @@ public interface IFoodRepository
     Task UpdateAsync(FoodItem item, CancellationToken cancellationToken = default);
 
     Task DeleteAsync(FoodItem item, CancellationToken cancellationToken = default);
+
+    Task ReplaceFoodCuisinesAsync(Guid foodId, IReadOnlyList<Guid> cuisineIds, CancellationToken cancellationToken = default);
 }

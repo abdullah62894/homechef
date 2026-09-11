@@ -20,6 +20,8 @@ public sealed record UpdateFoodItemRequest
 
     public Guid? CategoryId { get; init; }
 
+    public List<Guid>? CuisineIds { get; init; }
+
     public bool IsAvailable { get; init; } = true;
 
     [StringLength(500)]

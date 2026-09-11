@@ -1,5 +1,6 @@
 using HomeChef.Application.Features.Foods;
 using HomeChef.Application.Features.Foods.Contracts;
+using HomeChef.Domain.Cuisines;
 using HomeChef.Domain.Foods;
 using HomeChef.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -21,6 +22,7 @@ public sealed class FoodRepository : IFoodRepository
             .AsNoTracking()
             .Include(f => f.ChefProfile)
             .Include(f => f.Category)
+            .Include(f => f.FoodCuisines).ThenInclude(fc => fc.Cuisine)
             .FirstOrDefaultAsync(f => f.Id == id, cancellationToken);
     }
 
@@ -34,6 +36,7 @@ public sealed class FoodRepository : IFoodRepository
             .AsNoTracking()
             .Include(f => f.ChefProfile)
             .Include(f => f.Category)
+            .Include(f => f.FoodCuisines).ThenInclude(fc => fc.Cuisine)
             .AsQueryable();
 
         if (filter.ChefId.HasValue)
@@ -144,6 +147,7 @@ public sealed class FoodRepository : IFoodRepository
             .AsNoTracking()
             .Include(f => f.ChefProfile)
             .Include(f => f.Category)
+            .Include(f => f.FoodCuisines).ThenInclude(fc => fc.Cuisine)
             .Where(f => f.ChefProfileId == chefProfileId);
 
         if (isAvailable.HasValue)
@@ -177,6 +181,22 @@ public sealed class FoodRepository : IFoodRepository
     public async Task DeleteAsync(FoodItem item, CancellationToken cancellationToken = default)
     {
         _db.FoodItems.Remove(item);
+        await _db.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task ReplaceFoodCuisinesAsync(Guid foodId, IReadOnlyList<Guid> cuisineIds, CancellationToken cancellationToken = default)
+    {
+        var existing = await _db.FoodCuisines
+            .Where(fc => fc.FoodItemId == foodId)
+            .ToListAsync(cancellationToken);
+
+        _db.FoodCuisines.RemoveRange(existing);
+
+        foreach (var cuisineId in cuisineIds)
+        {
+            _db.FoodCuisines.Add(new FoodCuisine { FoodItemId = foodId, CuisineId = cuisineId });
+        }
+
         await _db.SaveChangesAsync(cancellationToken);
     }
 

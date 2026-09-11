@@ -3,6 +3,7 @@
 import { useCart } from "@/components/CartProvider";
 import { getChef, type ChefProfile } from "@/lib/chefs";
 import { fetchMe, type UserDto } from "@/lib/auth";
+import { createOrder, markWhatsAppInitiated, type CreateOrderRequest } from "@/lib/orders";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 
@@ -57,16 +58,23 @@ function buildWhatsAppUrl(phone: string, message: string): string {
 export default function CheckoutPage() {
   const { items, itemsByChef, totalPrice, clearCart } = useCart();
   const [user, setUser] = useState<UserDto | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deliveryAddress, setDeliveryAddress] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [customerName, setCustomerName] = useState("");
   const [chefProfiles, setChefProfiles] = useState<Record<string, ChefProfile>>({});
-  const [whatsappLinks, setWhatsappLinks] = useState<{ chefName: string; url: string }[] | null>(null);
+  const [whatsappLinks, setWhatsappLinks] = useState<{ chefName: string; url: string; orderId: string }[] | null>(null);
 
   useEffect(() => {
-    fetchMe().then(setUser).catch(() => {});
+    fetchMe()
+      .then((u) => {
+        setUser(u);
+        setLoading(false);
+      })
+      .catch(() => {
+        window.location.href = "/login?redirect=/checkout";
+      });
   }, []);
 
   useEffect(() => {
@@ -84,6 +92,14 @@ export default function CheckoutPage() {
     });
   }, [itemsByChef]);
 
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-3xl px-4 py-16 text-center text-gray-500">
+        Loading checkout…
+      </div>
+    );
+  }
+
   if (items.length === 0 && !whatsappLinks) {
     return (
       <div className="mx-auto max-w-3xl px-4 py-16 text-center">
@@ -96,8 +112,9 @@ export default function CheckoutPage() {
     );
   }
 
-  function handleOrder() {
+  async function handleOrder() {
     setError(null);
+    setLoading(true);
 
     const name = customerName.trim() || (user ? `${user.firstName} ${user.lastName}` : "");
     const phone = customerPhone.trim();
@@ -105,11 +122,12 @@ export default function CheckoutPage() {
 
     if (!name) {
       setError("Please enter your name.");
+      setLoading(false);
       return;
     }
 
     const chefIds = Object.keys(itemsByChef);
-    const links: { chefName: string; url: string }[] = [];
+    const links: { chefName: string; url: string; orderId: string }[] = [];
 
     for (const chefId of chefIds) {
       const chefItems = itemsByChef[chefId];
@@ -120,15 +138,42 @@ export default function CheckoutPage() {
       const phoneNum = chefProfile?.whatsAppNumber || chefProfile?.phoneNumber;
       if (!phoneNum) {
         setError(`${chefName} has not set up a phone number for WhatsApp orders yet.`);
+        setLoading(false);
         return;
       }
 
-      const message = buildWhatsAppMessage(chefName, chefItems, chefTotal, name, phone, address);
-      const url = buildWhatsAppUrl(phoneNum, message);
-      links.push({ chefName, url });
+      try {
+        const orderRequest: CreateOrderRequest = {
+          chefProfileId: chefId,
+          items: chefItems.map((i) => ({
+            foodItemId: i.foodItemId,
+            dishName: i.dishName,
+            quantity: i.quantity,
+            unitPrice: i.unitPrice,
+            currency: i.currency,
+          })),
+          deliveryAddress: address || undefined,
+          customerPhone: phone || undefined,
+          customerName: name,
+        };
+        const order = await createOrder(orderRequest);
+        const message = buildWhatsAppMessage(chefName, chefItems, chefTotal, name, phone, address);
+        const url = buildWhatsAppUrl(phoneNum, message);
+        links.push({ chefName, url, orderId: order.id });
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to create order. Please try again.");
+        setLoading(false);
+        return;
+      }
     }
 
     setWhatsappLinks(links);
+    setLoading(false);
+  }
+
+  function handleWhatsAppClick(orderId: string) {
+    markWhatsAppInitiated(orderId).catch(() => {});
+    clearCart();
   }
 
   if (whatsappLinks) {
@@ -143,11 +188,11 @@ export default function CheckoutPage() {
         <div className="mt-8 space-y-4">
           {whatsappLinks.map((link) => (
             <a
-              key={link.chefName}
+              key={link.orderId}
               href={link.url}
               target="_blank"
               rel="noopener noreferrer"
-              onClick={() => clearCart()}
+              onClick={() => handleWhatsAppClick(link.orderId)}
               className="block w-full rounded-xl bg-green-500 px-6 py-4 text-base font-semibold text-white shadow hover:bg-green-600 transition"
             >
               Order from {link.chefName} via WhatsApp
@@ -230,7 +275,7 @@ export default function CheckoutPage() {
         disabled={loading}
         className="mt-6 block w-full rounded-lg bg-green-500 py-3 text-center text-sm font-semibold text-white hover:bg-green-600 disabled:opacity-50"
       >
-        {loading ? "Preparing..." : "Order via WhatsApp"}
+        {loading ? "Placing order..." : "Order via WhatsApp"}
       </button>
 
       <Link href="/cart" className="mt-3 block text-center text-sm text-orange-500 hover:text-orange-600">

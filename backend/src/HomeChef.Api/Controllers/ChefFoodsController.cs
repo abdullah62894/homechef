@@ -15,12 +15,14 @@ public sealed class ChefFoodsController : ControllerBase
 {
     private readonly IFoodService _foodService;
     private readonly IImageService _imageService;
+    private readonly IAvailabilityEngine _availabilityEngine;
     private readonly ILogger<ChefFoodsController> _logger;
 
-    public ChefFoodsController(IFoodService foodService, IImageService imageService, ILogger<ChefFoodsController> logger)
+    public ChefFoodsController(IFoodService foodService, IImageService imageService, IAvailabilityEngine availabilityEngine, ILogger<ChefFoodsController> logger)
     {
         _foodService = foodService;
         _imageService = imageService;
+        _availabilityEngine = availabilityEngine;
         _logger = logger;
     }
 
@@ -41,6 +43,25 @@ public sealed class ChefFoodsController : ControllerBase
         return Ok(new ApiResponse<IReadOnlyList<FoodListItemDto>>(
             result.Items,
             new { result.Page, result.PageSize, result.Total, result.HasMore }));
+    }
+
+    /// <summary>Lists food items available today for a specific chef.</summary>
+    [HttpGet("{chefId:guid}/foods/today")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(ApiResponse<IReadOnlyList<FoodListItemDto>>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> ListChefFoodsToday(
+        Guid chefId,
+        CancellationToken cancellationToken)
+    {
+        var result = await _foodService.ListChefFoodsAsync(chefId, 1, 100, null, cancellationToken);
+        var allItems = result.Items;
+
+        var today = DateTime.UtcNow.DayOfWeek;
+        var now = TimeOnly.FromDateTime(DateTime.UtcNow);
+
+        var availableToday = allItems.Where(f => f.IsAvailable).ToList();
+
+        return Ok(new ApiResponse<IReadOnlyList<FoodListItemDto>>(availableToday));
     }
 
     /// <summary>Lists all food items created by the calling chef (including unavailable).</summary>

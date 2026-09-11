@@ -18,6 +18,8 @@ export interface FoodListItem {
   distanceKm: number | null;
   categoryId: string | null;
   categoryName: string | null;
+  cuisineNames: string[];
+  cuisineIds: string[];
   name: string;
   description: string;
   price: number;
@@ -41,6 +43,7 @@ export interface FoodItemInput {
   price: number;
   currency?: string;
   categoryId?: string | null;
+  cuisineIds?: string[];
   isAvailable?: boolean;
   imageUrl?: string | null;
   preparationTimeMinutes?: number | null;

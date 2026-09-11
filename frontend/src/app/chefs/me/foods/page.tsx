@@ -5,13 +5,11 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   listMyFoods,
-  listFoodCategories,
   createFoodItem,
   updateFoodItem,
   deleteFoodItem,
   toggleFoodAvailability,
   type FoodListItem,
-  type FoodCategory,
   type FoodItemInput,
 } from "@/lib/foods";
 import {
@@ -21,20 +19,21 @@ import {
   validateImageFile,
 } from "@/lib/images";
 import { updateFoodSchedule, type FoodScheduleInput } from "@/lib/foods";
+import { listAllCuisines, type Cuisine } from "@/lib/cuisines";
 import { ApiError } from "@/lib/api";
 
 const initialForm: {
   name: string;
   description: string;
   price: string;
-  categoryId: string;
+  cuisineIds: string[];
   preparationTimeMinutes: string;
   isAvailable: boolean;
 } = {
   name: "",
   description: "",
   price: "",
-  categoryId: "",
+  cuisineIds: [],
   preparationTimeMinutes: "",
   isAvailable: true,
 };
@@ -42,7 +41,7 @@ const initialForm: {
 export default function ChefManageFoodsPage() {
   const router = useRouter();
   const [foods, setFoods] = useState<FoodListItem[]>([]);
-  const [categories, setCategories] = useState<FoodCategory[]>([]);
+  const [cuisines, setCuisines] = useState<Cuisine[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -68,9 +67,9 @@ export default function ChefManageFoodsPage() {
   });
 
   const loadData = useCallback(async () => {
-    const [foodsResult, catsResult] = await Promise.allSettled([
+    const [foodsResult, cuisinesResult] = await Promise.allSettled([
       listMyFoods(1, 100),
-      listFoodCategories(),
+      listAllCuisines(),
     ]);
 
     if (foodsResult.status === "rejected") {
@@ -79,7 +78,7 @@ export default function ChefManageFoodsPage() {
 
     return {
       foods: foodsResult.value.items,
-      categories: catsResult.status === "fulfilled" ? catsResult.value : [],
+      cuisines: cuisinesResult.status === "fulfilled" ? cuisinesResult.value : [],
     };
   }, []);
 
@@ -90,7 +89,7 @@ export default function ChefManageFoodsPage() {
       .then((result) => {
         if (cancelled) return;
         setFoods(result.foods);
-        setCategories(result.categories);
+        setCuisines(result.cuisines);
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -131,7 +130,7 @@ export default function ChefManageFoodsPage() {
       name: food.name,
       description: food.description,
       price: food.price.toString(),
-      categoryId: food.categoryId ?? "",
+      cuisineIds: food.cuisineIds ?? [],
       preparationTimeMinutes: food.preparationTimeMinutes?.toString() ?? "",
       isAvailable: food.isAvailable,
     });
@@ -200,7 +199,7 @@ export default function ChefManageFoodsPage() {
       name: formData.name.trim(),
       description: formData.description.trim(),
       price: priceNum,
-      categoryId: formData.categoryId ? formData.categoryId : null,
+      cuisineIds: formData.cuisineIds,
       preparationTimeMinutes: prepTimeNum,
       isAvailable: formData.isAvailable,
     };
@@ -243,7 +242,7 @@ export default function ChefManageFoodsPage() {
       handleCloseForm();
       const result = await loadData();
       setFoods(result.foods);
-      setCategories(result.categories);
+      setCuisines(result.cuisines);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Failed to save dish. Please try again.");
     } finally {
@@ -278,6 +277,15 @@ export default function ChefManageFoodsPage() {
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Failed to update availability.");
     }
+  };
+
+  const toggleCuisine = (cuisineId: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      cuisineIds: prev.cuisineIds.includes(cuisineId)
+        ? prev.cuisineIds.filter((id) => id !== cuisineId)
+        : [...prev.cuisineIds, cuisineId],
+    }));
   };
 
   if (loading) {
@@ -351,7 +359,7 @@ export default function ChefManageFoodsPage() {
                     Dish
                   </th>
                   <th scope="col" className="px-6 py-3.5">
-                    Category
+                    Cuisine
                   </th>
                   <th scope="col" className="px-6 py-3.5">
                     Price
@@ -386,9 +394,17 @@ export default function ChefManageFoodsPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4 text-gray-600">
-                      <span className="rounded bg-gray-100 px-2 py-0.5 text-xs font-medium">
-                        {food.categoryName ?? "General"}
-                      </span>
+                      <div className="flex flex-wrap gap-1">
+                        {food.cuisineNames?.length > 0 ? (
+                          food.cuisineNames.map((name) => (
+                            <span key={name} className="rounded bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-700">
+                              {name}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="rounded bg-gray-100 px-2 py-0.5 text-xs font-medium">General</span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-6 py-4 font-semibold text-gray-900 whitespace-nowrap">
                       {food.currency} {food.price.toLocaleString()}
@@ -467,25 +483,6 @@ export default function ChefManageFoodsPage() {
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label htmlFor="foodCategory" className="block text-xs font-semibold text-gray-700 uppercase">
-                    Category
-                  </label>
-                  <select
-                    id="foodCategory"
-                    value={formData.categoryId}
-                    onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
-                    className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
-                  >
-                    <option value="">-- Select Category --</option>
-                    {categories.map((cat) => (
-                      <option key={cat.id} value={cat.id}>
-                        {cat.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
                   <label htmlFor="foodPrice" className="block text-xs font-semibold text-gray-700 uppercase">
                     Price (PKR) *
                   </label>
@@ -501,22 +498,48 @@ export default function ChefManageFoodsPage() {
                     className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                   />
                 </div>
+
+                <div>
+                  <label htmlFor="foodPrepTime" className="block text-xs font-semibold text-gray-700 uppercase">
+                    Prep Time (minutes, optional)
+                  </label>
+                  <input
+                    id="foodPrepTime"
+                    type="number"
+                    min="1"
+                    max="1440"
+                    value={formData.preparationTimeMinutes}
+                    onChange={(e) => setFormData({ ...formData, preparationTimeMinutes: e.target.value })}
+                    placeholder="e.g. 45"
+                    className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+                  />
+                </div>
               </div>
 
               <div>
-                <label htmlFor="foodPrepTime" className="block text-xs font-semibold text-gray-700 uppercase">
-                  Prep Time (minutes, optional)
+                <label className="block text-xs font-semibold text-gray-700 uppercase">
+                  Cuisines
                 </label>
-                <input
-                  id="foodPrepTime"
-                  type="number"
-                  min="1"
-                  max="1440"
-                  value={formData.preparationTimeMinutes}
-                  onChange={(e) => setFormData({ ...formData, preparationTimeMinutes: e.target.value })}
-                  placeholder="e.g. 45"
-                  className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
-                />
+                <div className="mt-1 flex flex-wrap gap-2">
+                  {cuisines.map((cuisine) => (
+                    <button
+                      key={cuisine.id}
+                      type="button"
+                      onClick={() => toggleCuisine(cuisine.id)}
+                      className={`rounded-full px-3 py-1.5 text-xs font-medium border transition ${
+                        formData.cuisineIds.includes(cuisine.id)
+                          ? "bg-orange-100 border-orange-300 text-orange-700"
+                          : "bg-white border-gray-200 text-gray-600 hover:border-gray-400"
+                      }`}
+                    >
+                      {cuisine.name}
+                    </button>
+                  ))}
+                  {cuisines.length === 0 && (
+                    <p className="text-xs text-gray-500">No cuisines available.</p>
+                  )}
+                </div>
+                <p className="mt-1 text-xs text-gray-500">Select one or more cuisines for this dish.</p>
               </div>
 
               <div>

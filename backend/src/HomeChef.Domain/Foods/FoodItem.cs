@@ -1,4 +1,5 @@
 using HomeChef.Domain.Chefs;
+using HomeChef.Domain.Cuisines;
 
 namespace HomeChef.Domain.Foods;
 
@@ -38,4 +39,6 @@ public class FoodItem
     public DateTime CreatedAtUtc { get; set; }
 
     public DateTime UpdatedAtUtc { get; set; }
+
+    public ICollection<FoodCuisine> FoodCuisines { get; set; } = new List<FoodCuisine>();
 }

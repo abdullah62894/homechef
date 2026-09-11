@@ -121,9 +121,17 @@ export default function FoodDetailView({ id }: { id: string }) {
           <div className="rounded-2xl border border-gray-200 bg-white p-6 sm:p-8">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="rounded-md bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-700">
-                  {food.categoryName ?? "General Dish"}
-                </span>
+                {food.cuisineNames?.length > 0 ? (
+                  food.cuisineNames.map((name) => (
+                    <span key={name} className="rounded-md bg-orange-100 px-2.5 py-0.5 text-xs font-semibold text-orange-700">
+                      {name}
+                    </span>
+                  ))
+                ) : (
+                  <span className="rounded-md bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-700">
+                    {food.categoryName ?? "General Dish"}
+                  </span>
+                )}
                 <span
                   className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
                     food.isAvailable

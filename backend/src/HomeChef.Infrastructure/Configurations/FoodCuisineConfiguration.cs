@@ -13,7 +13,7 @@ public sealed class FoodCuisineConfiguration : IEntityTypeConfiguration<FoodCuis
         builder.HasKey(fc => new { fc.FoodItemId, fc.CuisineId });
 
         builder.HasOne(fc => fc.FoodItem)
-            .WithMany()
+            .WithMany(f => f.FoodCuisines)
             .HasForeignKey(fc => fc.FoodItemId)
             .OnDelete(DeleteBehavior.Cascade);
 

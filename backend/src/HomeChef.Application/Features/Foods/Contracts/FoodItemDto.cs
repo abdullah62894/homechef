@@ -24,6 +24,10 @@ public sealed record FoodItemDto
 
     public string? CategoryName { get; init; }
 
+    public List<string> CuisineNames { get; init; } = [];
+
+    public List<Guid> CuisineIds { get; init; } = [];
+
     public required string Name { get; init; }
 
     public required string Description { get; init; }
