@@ -57,4 +57,10 @@ public interface IFoodService
 
     /// <summary>Removes the image of a food item owned by the calling chef.</summary>
     Task<FoodItemDto> ClearFoodImageAsync(Guid userId, Guid foodId, CancellationToken cancellationToken = default);
+
+    /// <summary>Updates the availability schedule for a food item (days, times, isAllDay).</summary>
+    Task UpdateFoodScheduleAsync(
+        Guid userId, Guid foodId, List<FoodScheduleInput> schedules, CancellationToken cancellationToken = default);
 }
+
+public record FoodScheduleInput(int DayOfWeek, TimeOnly? StartTime, TimeOnly? EndTime, bool IsAllDay, Guid? MealCategoryId);

@@ -270,10 +270,10 @@ public sealed class AdminService : IAdminService
         var profile = await _chefProfileRepository.GetByUserIdAsync(user.Id, cancellationToken);
         var isSuspended = await _userManager.IsLockedOutAsync(user);
 
-        return ToDto(user, roles, isSuspended, profile?.Id);
+        return ToDto(user, roles, isSuspended, profile?.Id, profile?.ApprovalStatus.ToString());
     }
 
-    private static AdminUserDto ToDto(ApplicationUser user, IList<string> roles, bool isSuspended, Guid? chefProfileId)
+    private static AdminUserDto ToDto(ApplicationUser user, IList<string> roles, bool isSuspended, Guid? chefProfileId, string? chefApprovalStatus)
     {
         return new AdminUserDto
         {
@@ -284,6 +284,7 @@ public sealed class AdminService : IAdminService
             Roles = [.. roles],
             IsSuspended = isSuspended,
             ChefProfileId = chefProfileId,
+            ChefApprovalStatus = chefApprovalStatus,
             CreatedAtUtc = user.CreatedAtUtc,
         };
     }

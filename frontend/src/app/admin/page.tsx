@@ -511,87 +511,48 @@ export default function AdminConsolePage() {
                         </span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-right space-x-2 whitespace-nowrap">
-                      <button
-                        type="button"
-                        onClick={() => openEditUser(user)}
-                        disabled={busyId === user.id}
-                        className="font-medium text-gray-700 hover:text-gray-900 underline text-xs disabled:opacity-50"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => openSetPassword(user)}
-                        disabled={busyId === user.id}
-                        className="font-medium text-gray-700 hover:text-gray-900 underline text-xs disabled:opacity-50"
-                      >
-                        Set password
-                      </button>
-                      {user.isSuspended ? (
-                        <button
-                          type="button"
-                          onClick={() => handleRestore(user)}
-                          disabled={busyId === user.id}
-                          className="font-medium text-emerald-700 hover:text-emerald-900 underline text-xs disabled:opacity-50"
-                        >
-                          Restore
-                        </button>
-                      ) : (
-                        !user.roles.includes("Admin") && (
-                          <button
-                            type="button"
-                            onClick={() => handleSuspend(user)}
-                            disabled={busyId === user.id}
-                            className="font-medium text-amber-700 hover:text-amber-900 underline text-xs disabled:opacity-50"
-                          >
-                            Suspend
-                          </button>
-                        )
-                      )}
-                      {/* Kitchen actions exist only for chefs with a kitchen. */}
+                    <td className="px-4 py-3 text-right space-y-2 whitespace-nowrap">
+                      {/* Account actions */}
+                      <div className="flex items-center justify-end gap-1">
+                        <button type="button" onClick={() => openEditUser(user)} disabled={busyId === user.id}
+                          className="rounded-md bg-gray-100 px-2.5 py-1 text-xs font-semibold text-gray-700 hover:bg-gray-200 disabled:opacity-50">Edit</button>
+                        <button type="button" onClick={() => openSetPassword(user)} disabled={busyId === user.id}
+                          className="rounded-md bg-gray-100 px-2.5 py-1 text-xs font-semibold text-gray-700 hover:bg-gray-200 disabled:opacity-50">Password</button>
+                      </div>
+                      {/* Status actions */}
+                      <div className="flex items-center justify-end gap-1">
+                        {user.isSuspended ? (
+                          <button type="button" onClick={() => handleRestore(user)} disabled={busyId === user.id}
+                            className="rounded-md bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-200 disabled:opacity-50">Restore</button>
+                        ) : (
+                          !user.roles.includes("Admin") && (
+                            <button type="button" onClick={() => handleSuspend(user)} disabled={busyId === user.id}
+                              className="rounded-md bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-700 hover:bg-amber-200 disabled:opacity-50">Suspend</button>
+                          )
+                        )}
+                      </div>
+                      {/* Kitchen actions */}
                       {user.roles.includes("Chef") && user.chefProfileId && (
-                        <>
-                          <Link
-                            href={chefHref(user.chefProfileId)}
-                            className="font-medium text-gray-700 hover:text-gray-900 underline text-xs"
-                          >
-                            View kitchen
-                          </Link>
-                          <button
-                            type="button"
-                            onClick={() => handleApproveChef(user)}
-                            disabled={busyId === user.id}
-                            className="font-medium text-emerald-700 hover:text-emerald-900 underline text-xs disabled:opacity-50"
-                          >
-                            Approve
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleRejectChef(user)}
-                            disabled={busyId === user.id}
-                            className="font-medium text-amber-700 hover:text-amber-900 underline text-xs disabled:opacity-50"
-                          >
-                            Reject
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveKitchen(user)}
-                            disabled={busyId === user.id}
-                            className="font-medium text-red-600 hover:text-red-800 underline text-xs disabled:opacity-50"
-                          >
-                            Remove kitchen
-                          </button>
-                        </>
+                        <div className="flex items-center justify-end gap-1">
+                          <Link href={chefHref(user.chefProfileId)}
+                            className="rounded-md bg-blue-100 px-2.5 py-1 text-xs font-semibold text-blue-700 hover:bg-blue-200">Kitchen</Link>
+                          {user.chefApprovalStatus !== "Approved" && (
+                            <button type="button" onClick={() => handleApproveChef(user)} disabled={busyId === user.id}
+                              className="rounded-md bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-200 disabled:opacity-50">Approve</button>
+                          )}
+                          {user.chefApprovalStatus !== "Rejected" && (
+                            <button type="button" onClick={() => handleRejectChef(user)} disabled={busyId === user.id}
+                              className="rounded-md bg-red-100 px-2.5 py-1 text-xs font-semibold text-red-600 hover:bg-red-200 disabled:opacity-50">Reject</button>
+                          )}
+                          <button type="button" onClick={() => handleRemoveKitchen(user)} disabled={busyId === user.id}
+                            className="rounded-md bg-red-100 px-2.5 py-1 text-xs font-semibold text-red-600 hover:bg-red-200 disabled:opacity-50">Remove kitchen</button>
+                        </div>
                       )}
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteUser(user)}
-                        disabled={busyId === user.id}
-                        className="font-medium text-red-600 hover:text-red-800 underline text-xs disabled:opacity-50"
-                      >
-                        Delete
-                      </button>
+                      {/* Danger actions */}
+                      <div className="flex items-center justify-end">
+                        <button type="button" onClick={() => handleDeleteUser(user)} disabled={busyId === user.id}
+                          className="rounded-md bg-red-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-red-700 disabled:opacity-50">Delete</button>
+                      </div>
                     </td>
                   </tr>
                 ))}

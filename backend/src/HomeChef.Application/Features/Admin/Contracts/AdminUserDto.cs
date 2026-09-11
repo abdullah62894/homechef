@@ -18,6 +18,9 @@ public sealed class AdminUserDto
     /// <summary>Id of the user's chef profile, when they run a kitchen.</summary>
     public Guid? ChefProfileId { get; init; }
 
+    /// <summary>Chef approval status (PendingApproval, Approved, Rejected).</summary>
+    public string? ChefApprovalStatus { get; init; }
+
     public required DateTime CreatedAtUtc { get; init; }
 }
 

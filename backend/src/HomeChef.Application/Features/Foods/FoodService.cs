@@ -19,17 +19,20 @@ public sealed class FoodService : IFoodService
     private readonly IFoodRepository _foodRepository;
     private readonly IFoodCategoryRepository _categoryRepository;
     private readonly IChefProfileRepository _chefProfileRepository;
+    private readonly IFoodAvailabilityRepository _availabilityRepository;
     private readonly IMemoryCache _cache;
 
     public FoodService(
         IFoodRepository foodRepository,
         IFoodCategoryRepository categoryRepository,
         IChefProfileRepository chefProfileRepository,
+        IFoodAvailabilityRepository availabilityRepository,
         IMemoryCache cache)
     {
         _foodRepository = foodRepository;
         _categoryRepository = categoryRepository;
         _chefProfileRepository = chefProfileRepository;
+        _availabilityRepository = availabilityRepository;
         _cache = cache;
     }
 
@@ -378,5 +381,31 @@ public sealed class FoodService : IFoodService
             CreatedAtUtc = food.CreatedAtUtc,
             UpdatedAtUtc = food.UpdatedAtUtc,
         };
+    }
+
+    public async Task UpdateFoodScheduleAsync(
+        Guid userId, Guid foodId, List<FoodScheduleInput> schedules, CancellationToken cancellationToken = default)
+    {
+        var food = await _foodRepository.GetByIdAsync(foodId, cancellationToken)
+            ?? throw new BusinessException(ErrorCodes.FoodItemNotFound, "Food item not found.");
+
+        var profile = await _chefProfileRepository.GetByUserIdAsync(userId, cancellationToken);
+        if (profile is null || food.ChefProfileId != profile.Id)
+            throw new BusinessException(ErrorCodes.FoodItemForbidden, "You do not own this food item.");
+
+        var windows = schedules.Select(s => new FoodAvailability
+        {
+            Id = Guid.NewGuid(),
+            FoodItemId = foodId,
+            AvailableDays = [s.DayOfWeek],
+            StartTime = s.StartTime ?? new TimeOnly(0, 0),
+            EndTime = s.EndTime ?? new TimeOnly(23, 59),
+            IsAllDay = s.IsAllDay,
+            MealCategoryId = s.MealCategoryId,
+            CreatedAtUtc = DateTime.UtcNow,
+            UpdatedAtUtc = DateTime.UtcNow,
+        }).ToList();
+
+        await _availabilityRepository.ReplaceAllAsync(foodId, windows, cancellationToken);
     }
 }

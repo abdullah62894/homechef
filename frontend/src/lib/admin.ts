@@ -1,4 +1,5 @@
 import { apiFetch, type ApiEnvelope } from "./api";
+import { API_BASE_URL } from "./api/config";
 import type { Report } from "./reports";
 import type { Cuisine } from "./cuisines";
 
@@ -10,6 +11,7 @@ export interface AdminUser {
   roles: string[];
   isSuspended: boolean;
   chefProfileId: string | null;
+  chefApprovalStatus: string | null;
   createdAtUtc: string;
 }
 
@@ -184,7 +186,7 @@ export function rejectChef(chefProfileId: string, reason?: string): Promise<Admi
 export function uploadCuisineImage(cuisineId: string, file: File): Promise<void> {
   const formData = new FormData();
   formData.append("file", file);
-  return fetch(`/api/cuisines/${cuisineId}/image`, {
+  return fetch(`${API_BASE_URL}/api/cuisines/${cuisineId}/image`, {
     method: "POST",
     headers: { Accept: "application/json" },
     credentials: "include",

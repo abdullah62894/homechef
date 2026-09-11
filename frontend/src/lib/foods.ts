@@ -177,3 +177,18 @@ export function toggleFoodAvailability(id: string, isAvailable: boolean): Promis
     body: { isAvailable },
   }).then(unwrap);
 }
+
+export interface FoodScheduleInput {
+  dayOfWeek: number;
+  startTime: string | null;
+  endTime: string | null;
+  isAllDay: boolean;
+  mealCategoryId: string | null;
+}
+
+export function updateFoodSchedule(foodId: string, schedules: FoodScheduleInput[]): Promise<void> {
+  return apiFetch<ApiEnvelope<void>>(`/api/chefs/me/foods/${foodId}/schedule`, {
+    method: "PUT",
+    body: { schedules },
+  }).then(() => undefined);
+}

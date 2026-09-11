@@ -20,6 +20,7 @@ import {
   resolveImageUrl,
   validateImageFile,
 } from "@/lib/images";
+import { updateFoodSchedule, type FoodScheduleInput } from "@/lib/foods";
 import { ApiError } from "@/lib/api";
 
 const initialForm: {
@@ -53,6 +54,18 @@ export default function ChefManageFoodsPage() {
   const [submitting, setSubmitting] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [removeImage, setRemoveImage] = useState(false);
+
+  // Dish-level scheduling
+  const [scheduleEnabled, setScheduleEnabled] = useState(false);
+  const [scheduleDays, setScheduleDays] = useState<Record<number, { enabled: boolean; isAllDay: boolean; startTime: string; endTime: string }>>({
+    0: { enabled: false, isAllDay: true, startTime: "09:00", endTime: "21:00" },
+    1: { enabled: false, isAllDay: true, startTime: "09:00", endTime: "21:00" },
+    2: { enabled: false, isAllDay: true, startTime: "09:00", endTime: "21:00" },
+    3: { enabled: false, isAllDay: true, startTime: "09:00", endTime: "21:00" },
+    4: { enabled: false, isAllDay: true, startTime: "09:00", endTime: "21:00" },
+    5: { enabled: false, isAllDay: true, startTime: "09:00", endTime: "21:00" },
+    6: { enabled: false, isAllDay: true, startTime: "09:00", endTime: "21:00" },
+  });
 
   const loadData = useCallback(async () => {
     const [foodsResult, catsResult] = await Promise.allSettled([
@@ -105,6 +118,8 @@ export default function ChefManageFoodsPage() {
     setFormData(initialForm);
     setImageFile(null);
     setRemoveImage(false);
+    setScheduleEnabled(false);
+    resetScheduleDays();
     setError(null);
     setSuccess(null);
     setIsFormOpen(true);
@@ -133,7 +148,21 @@ export default function ChefManageFoodsPage() {
     setFormData(initialForm);
     setImageFile(null);
     setRemoveImage(false);
+    setScheduleEnabled(false);
+    resetScheduleDays();
   };
+
+  function resetScheduleDays() {
+    setScheduleDays({
+      0: { enabled: false, isAllDay: true, startTime: "09:00", endTime: "21:00" },
+      1: { enabled: false, isAllDay: true, startTime: "09:00", endTime: "21:00" },
+      2: { enabled: false, isAllDay: true, startTime: "09:00", endTime: "21:00" },
+      3: { enabled: false, isAllDay: true, startTime: "09:00", endTime: "21:00" },
+      4: { enabled: false, isAllDay: true, startTime: "09:00", endTime: "21:00" },
+      5: { enabled: false, isAllDay: true, startTime: "09:00", endTime: "21:00" },
+      6: { enabled: false, isAllDay: true, startTime: "09:00", endTime: "21:00" },
+    });
+  }
 
   function handleImageChange(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -191,6 +220,24 @@ export default function ChefManageFoodsPage() {
         await uploadFoodImage(foodId, imageFile);
       } else if (foodId && removeImage) {
         await clearFoodImage(foodId);
+      }
+
+      if (foodId && scheduleEnabled) {
+        const schedules: FoodScheduleInput[] = [];
+        for (const [dayStr, day] of Object.entries(scheduleDays)) {
+          if (day.enabled) {
+            schedules.push({
+              dayOfWeek: parseInt(dayStr),
+              startTime: day.isAllDay ? null : day.startTime,
+              endTime: day.isAllDay ? null : day.endTime,
+              isAllDay: day.isAllDay,
+              mealCategoryId: null,
+            });
+          }
+        }
+        if (schedules.length > 0) {
+          await updateFoodSchedule(foodId, schedules);
+        }
       }
 
       handleCloseForm();
@@ -558,6 +605,80 @@ export default function ChefManageFoodsPage() {
                 <label htmlFor="isAvailable" className="text-sm font-medium text-gray-700">
                   Available for order immediately
                 </label>
+              </div>
+
+              <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+                <div className="flex items-center gap-2">
+                  <input
+                    id="scheduleEnabled"
+                    type="checkbox"
+                    checked={scheduleEnabled}
+                    onChange={(e) => setScheduleEnabled(e.target.checked)}
+                    className="h-4 w-4 rounded border-gray-300 text-gray-900 focus:ring-gray-900"
+                  />
+                  <label htmlFor="scheduleEnabled" className="text-sm font-semibold text-gray-700">
+                    Set dish-level availability schedule
+                  </label>
+                </div>
+                <p className="mt-1 text-xs text-gray-500">Control which days and times this specific dish is available.</p>
+
+                {scheduleEnabled && (
+                  <div className="mt-3 space-y-2">
+                    {(["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const).map((dayName, idx) => (
+                      <div key={idx} className="flex items-center gap-3">
+                        <input
+                          type="checkbox"
+                          checked={scheduleDays[idx].enabled}
+                          onChange={(e) => setScheduleDays(prev => ({
+                            ...prev,
+                            [idx]: { ...prev[idx], enabled: e.target.checked }
+                          }))}
+                          className="h-4 w-4 rounded border-gray-300 text-gray-900"
+                        />
+                        <span className="w-8 text-xs font-medium text-gray-700">{dayName}</span>
+                        {scheduleDays[idx].enabled && (
+                          <>
+                            <label className="flex items-center gap-1 text-xs text-gray-600">
+                              <input
+                                type="checkbox"
+                                checked={scheduleDays[idx].isAllDay}
+                                onChange={(e) => setScheduleDays(prev => ({
+                                  ...prev,
+                                  [idx]: { ...prev[idx], isAllDay: e.target.checked }
+                                }))}
+                                className="h-3 w-3 rounded border-gray-300"
+                              />
+                              All day
+                            </label>
+                            {!scheduleDays[idx].isAllDay && (
+                              <>
+                                <input
+                                  type="time"
+                                  value={scheduleDays[idx].startTime}
+                                  onChange={(e) => setScheduleDays(prev => ({
+                                    ...prev,
+                                    [idx]: { ...prev[idx], startTime: e.target.value }
+                                  }))}
+                                  className="rounded border border-gray-300 px-2 py-1 text-xs"
+                                />
+                                <span className="text-xs text-gray-500">to</span>
+                                <input
+                                  type="time"
+                                  value={scheduleDays[idx].endTime}
+                                  onChange={(e) => setScheduleDays(prev => ({
+                                    ...prev,
+                                    [idx]: { ...prev[idx], endTime: e.target.value }
+                                  }))}
+                                  className="rounded border border-gray-300 px-2 py-1 text-xs"
+                                />
+                              </>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className="mt-6 flex justify-end gap-3 border-t pt-4">

@@ -167,4 +167,24 @@ public sealed class ChefFoodsController : ControllerBase
 
         return Ok(new ApiResponse<FoodItemDto>(food));
     }
+
+    [HttpPut("me/foods/{id:guid}/schedule")]
+    [Authorize(Policy = Policies.RequireChef)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> UpdateSchedule(
+        Guid id,
+        [FromBody] UpdateFoodScheduleRequest request,
+        CancellationToken cancellationToken)
+    {
+        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var inputs = request.Schedules.Select(s => new FoodScheduleInput(
+            s.DayOfWeek, s.StartTime, s.EndTime, s.IsAllDay, s.MealCategoryId)).ToList();
+        await _foodService.UpdateFoodScheduleAsync(userId, id, inputs, cancellationToken);
+        return NoContent();
+    }
 }
+
+public record UpdateFoodScheduleRequest(List<FoodScheduleRequest> Schedules);
+public record FoodScheduleRequest(int DayOfWeek, TimeOnly? StartTime, TimeOnly? EndTime, bool IsAllDay, Guid? MealCategoryId);
